@@ -1,0 +1,25 @@
+Caustics Generator Free 3.4
+
+http://www.dualheights.se/caustics/
+
+Copyright (c) 2003-2011
+Dual Heights Software AB
+
+info@dualheights.se
+
+ABOUT
+-----
+
+Caustics can be described as the light pattern you see at the bottom of a pool
+on a sunny day. This tool will let you render such caustic light patterns. The
+rendered images can be animated and are tileable in both space and time.
+The rendered images can be used for both realtime applications, such as computer
+games, and for non realtime uses such as movie productions and illustrations.
+
+LICENSE
+-------
+This version of Caustics Generator may be freely used for non-commercial purposes.
+Commercial use of the program is not allowed.
+
+This program may not be reverse engineered.
+This program may not be sold or repackaged.
