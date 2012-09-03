@@ -76,7 +76,7 @@ public class GraphicsManager {
 			e.printStackTrace();
 		}
 
-	//	GameBase.getZone().createTallGrass(new Rectangle(0, 0, 500, 1000), 2000);
+		GameBase.getZone().createTallGrass(new Rectangle(0, 0, 3000, 2000), 15000);
 	//f	GameBase.getZone().createTallGrass(new Rectangle(500, 0, 500, 1000), 5000);
 		
 		sparktest.init(null, 1000, 0.09f, -90, 10);
@@ -122,7 +122,11 @@ public class GraphicsManager {
 			if(ControlManager.keyStatus(Keyboard.KEY_P)) {
 				int tileX = GameBase.getZone().getTileAtX(EntityManager.getPlayer().getBounds().getCenterX());
 				int tileY = GameBase.getZone().getTileAtY(EntityManager.getPlayer().getBounds().getCenterY());
-				pathfinderTest.pathfind(AIManager.getNodeMap().getNodeAt(tileX, tileY), AIManager.getNodeMap().getNodeAt(20, 10));
+				pathfinderTest.pathfind(
+						AIManager.getNodeMap().getNodeAt(tileX, tileY), 
+						AIManager.getNodeMap().getNodeAt(
+								GameBase.getZone().getTileAtX(toWorldX(ControlManager.getMouseX())), 
+								GameBase.getZone().getTileAtY(toWorldY(ControlManager.getMouseY()))));
 			}
 				pathfinderTest.createPath().render(g);
 				
@@ -247,14 +251,26 @@ public class GraphicsManager {
 			Entity curEnt = EntityManager.getByIndex(i);
 			if(curEnt instanceof Entity_player) {
 				curEnt = (Entity_player)curEnt;
-				
-				if(debug) 
-					g.draw(curEnt.getBounds());
-				
-				float x = curEnt.getX() - curEnt.getImg().getWidth()/2, y = curEnt.getY() - curEnt.getImg().getHeight()/2;
-				
-				g.drawImage(curEnt.getImg(), x + curEnt.getImgOffsetX(), y + curEnt.getImgOffsetY());
+			} else if(curEnt instanceof Entity_mobile) {
+				curEnt = (Entity_mobile)curEnt;
 			}
+			
+			float z;
+			
+			if(curEnt instanceof Entity_mobile) {
+				z = ((Entity_mobile) curEnt).getZ();
+			} else z = 0;
+			
+			if(debug) 
+				g.draw(curEnt.getBounds());
+			
+			float x = curEnt.getX() - curEnt.getImg().getWidth()/2, y = curEnt.getY() - curEnt.getImg().getHeight()/2;
+			
+			g.setColor(new Color(0, 0, 0, 0.4f));
+			g.fillOval(curEnt.getBounds().getCenterX() -15 , curEnt.getBounds().getCenterY() + curEnt.getImgOffsetY() + 8, 30, 8);
+			
+			g.drawImage(curEnt.getImg(), x + curEnt.getImgOffsetX(), y + curEnt.getImgOffsetY() + z);
+			
 		}
 	}
 	

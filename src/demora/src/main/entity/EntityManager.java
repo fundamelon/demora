@@ -16,7 +16,7 @@ public class EntityManager {
 	public static void init() {
 		try {
 			addToTable(new Entity_player());
-			addToTable(new Entity_umbrin_test());
+		//	addToTable(new Entity_umbrin_test());
 		} catch (SlickException e) {
 			e.printStackTrace();
 		}

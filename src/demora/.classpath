@@ -2,19 +2,36 @@
 <classpath>
 	<classpathentry excluding="org/newdawn/slick/command/|org/newdawn/slick/data/|org/newdawn/slick/fills/|org/newdawn/slick/font/|org/newdawn/slick/font/effects/|org/newdawn/slick/geom/|org/newdawn/slick/gui/|org/newdawn/slick/imageout/|org/newdawn/slick/loading/|org/newdawn/slick/muffin/|org/newdawn/slick/openal/|org/newdawn/slick/opengl/|org/newdawn/slick/opengl/pbuffer/|org/newdawn/slick/opengl/renderer/|org/newdawn/slick/state/|org/newdawn/slick/state/transition/|org/newdawn/slick/svg/|org/newdawn/slick/svg/inkscape/|org/newdawn/slick/tests/|org/newdawn/slick/tests/states/|org/newdawn/slick/tests/xml/|org/newdawn/slick/tiled/|org/newdawn/slick/util/|org/newdawn/slick/util/pathfinding/|org/newdawn/slick/util/pathfinding/heuristics/|org/newdawn/slick/util/xml/|org/newdawn/slick/|tiled/core/|tiled/io/|tiled/io/resources/|tiled/io/xml/|tiled/util/|tiled/view/" kind="src" path="src">
 		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="demora/lib/lwjgl-2.8.4/native"/>
 			<attribute name="ignore_optional_problems" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/lwjgl-2.8.2/jar/lwjgl.jar">
+	<classpathentry kind="lib" path="lib/slick/lib/slick.jar">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="demora/dist/windows"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="demora/lib/lwjgl-2.8.4/native/windows"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/lwjgl-2.8.2/jar/lwjgl_util.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-2.8.2/jar/jinput.jar"/>
-	<classpathentry kind="lib" path="lib/lwjgl-2.8.2/jar/lzma.jar"/>
-	<classpathentry kind="lib" path="lib/slick/lib/slick.jar"/>
 	<classpathentry kind="lib" path="lib/slick/lib/slick-util.jar"/>
+	<classpathentry kind="lib" path="lib/lwjgl-2.8.4/jar/lwjgl.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="demora/lib/lwjgl-2.8.4/native/windows"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/lwjgl-2.8.4/jar/jinput.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="demora/lib/lwjgl-2.8.4/native/windows"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/lwjgl-2.8.4/jar/lwjgl_util.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="demora/lib/lwjgl-2.8.4/native/windows"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/lwjgl-2.8.4/jar/lzma.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="demora/lib/lwjgl-2.8.4/native/windows"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

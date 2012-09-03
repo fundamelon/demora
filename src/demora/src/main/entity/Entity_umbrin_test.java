@@ -35,7 +35,7 @@ public class Entity_umbrin_test extends Entity_mobile implements Entity {
 	}
 	
 	public void update() {
-		super.img_offset_y = (float)Math.sin((System.currentTimeMillis()) *0.002)*5 - 20;
+		super.z = (float)Math.sin((System.currentTimeMillis()) *0.002)*8 - 25;
 		
 		dx = (EntityManager.getPlayer().getX() - x) * 0.01f;
 		dy = (EntityManager.getPlayer().getY() - y) * 0.01f;
@@ -54,6 +54,9 @@ public class Entity_umbrin_test extends Entity_mobile implements Entity {
 		} else {
 			cur_img = TEX_FRONT.copy();
 		}
+
+		updateBounds();
+		move(x, y);
 	}
 	
 	public void updateBounds() {

@@ -38,7 +38,9 @@ public class Entity_detail_grassblade_med {
 			texture = GraphicsManager.grassblade_tex1.copy();
 		}
 		
-		float swayAmt = (float)Math.cos(System.nanoTime()/2000000000f + (Math.sin(x*0.001) + Math.cos(y*0.001))*chaos)*10;
+		float t = System.nanoTime()/2000000000f;
+		float swayAmt = (float)Math.cos(t + (Math.sin(x*0.001) + Math.cos(y*0.001))*chaos)*10;
+		swayAmt += Math.sin(t*0.03)*Math.cos(t*x*0.04)*Math.cos(t * 0.93*y)*0.1f*swayAmt;
 		if(EntityManager.getPlayer().getBounds().intersects(new Rectangle(x+5, y+10, 20, 40))) {
 			if(Math.abs(offset) <= 13)
 				if(EntityManager.getPlayer().getX()-16 < x) {

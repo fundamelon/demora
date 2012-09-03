@@ -3,7 +3,7 @@ package main;
 import org.newdawn.slick.geom.*;
 
 public class PhysUtil {
-	public static boolean collisions = true;
+	public static boolean collisions = false;
 	
 	public static boolean collision(Rectangle a, Rectangle b) {
 		return !(	(a.getX() + a.getWidth()-1 < b.getX()) ||

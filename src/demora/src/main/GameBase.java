@@ -14,27 +14,14 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.ARBFragmentShader;
-import org.lwjgl.opengl.ARBShaderObjects;
-import org.lwjgl.opengl.ARBVertexBufferObject;
-import org.lwjgl.opengl.ARBVertexShader;
-import org.lwjgl.opengl.GLContext;
-import org.lwjgl.opengl.Util;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GLContext;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.*;
 import org.lwjgl.util.glu.GLU;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.EXTFramebufferObject.*;
 
-import org.newdawn.slick.Graphics;
-import org.newdawn.slick.Image;
-import org.newdawn.slick.SlickException;
-import org.newdawn.slick.TrueTypeFont;
-import org.newdawn.slick.opengl.pbuffer.GraphicsFactory;
+import org.newdawn.slick.*;
+import org.newdawn.slick.opengl.*;
 import org.newdawn.slick.openal.*;
 
 import Dario.*;
@@ -58,7 +45,7 @@ public class GameBase {
 	
 	public static boolean debug_keyboard = 	false;
 	public static boolean debug_mouse = 	false;
-	public static boolean debug_graphics = 	true;
+	public static boolean debug_graphics = 	false;
 	public static boolean debug_menu = 		false;
 	public static boolean debug_tileUtil = 	false;
 	
@@ -77,6 +64,8 @@ public class GameBase {
 	/** current fps */
 	static int thisFPS;
 	
+	static util.Console console;
+	
 	static boolean vsync;
 	public static boolean shading;
 	public static boolean menuVisible;
@@ -89,11 +78,13 @@ public class GameBase {
 	public static boolean mapRendering = true;
 	
 	public static void main(String[] args) {
+		
 		GameBase.start();
 	}
 	
 	@SuppressWarnings("all")
 	public static void start() {
+	//	System.out.println(glGetString(GL_VENDOR));
 		try {
 			Display.setDisplayMode(new DisplayMode(800, 600));
 			Display.create();
@@ -238,6 +229,17 @@ public class GameBase {
 	    long delta = (time - lastFrame);
 	    lastFrame = time;
 	    return (delta/1000000f);
+	}
+
+	/**
+	 * Open a simple console
+	 */
+	public static void openConsole() {
+		if(console == null) {
+			try {
+				util.Console console = new util.Console();
+			}catch (Exception e) {}
+		}
 	}
 	
 	/**
