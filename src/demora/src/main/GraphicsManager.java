@@ -43,8 +43,6 @@ public class GraphicsManager {
 	//Vars with preceding underscore are to be values for render options.  :O
 	private static boolean fadeMode = true, helperText = false, shake = false;
 	
-	private static float temp_grassOffset = 0;
-	
 	static Pathfinder_AStar pathfinderTest = new Pathfinder_AStar(AIManager.getNodeMap());
 	
 	private static boolean debug = false;
@@ -70,14 +68,14 @@ public class GraphicsManager {
 		
 		
 		try {
-			grassblade_tex0 = new Image("lib/img/tilesets/individual/grass_blade.png");
+			grassblade_tex0 = new Image("lib/img/tilesets/individual/grass_blade0a.png");
 			grassblade_tex1 = new Image("lib/img/tilesets/individual/grass_blade1.png");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 
-		GameBase.getZone().createTallGrass(new Rectangle(0, 0, 3000, 2000), 15000);
-	//f	GameBase.getZone().createTallGrass(new Rectangle(500, 0, 500, 1000), 5000);
+		GameBase.getMap().createTallGrass(0, new Rectangle(0, 0, 3000, 2000), 15000);
+	//	GameBase.getZone().createTallGrass(0, new Rectangle(0, 0, 3000, 2000), 15000);
 		
 		sparktest.init(null, 1000, 0.09f, -90, 10);
 	}
@@ -112,21 +110,21 @@ public class GraphicsManager {
 		g.translate(-Camera.getAnchorX(), -Camera.getAnchorY());
 
 		if(debug) {
-			for(Rectangle r : GameBase.getZone().getCollisionArray()) {
+			for(Rectangle r : GameBase.getMap().getCollisionArray()) {
 				if(r != null) {
 					g.draw(r);
 				}
 			}
 			
-		//	AIManager.renderNodeMap(g);
+			AIManager.renderNodeMap(g);
 			if(ControlManager.keyStatus(Keyboard.KEY_P)) {
-				int tileX = GameBase.getZone().getTileAtX(EntityManager.getPlayer().getBounds().getCenterX());
-				int tileY = GameBase.getZone().getTileAtY(EntityManager.getPlayer().getBounds().getCenterY());
+				int tileX = GameBase.getMap().getTileAtX(EntityManager.getPlayer().getBounds().getCenterX());
+				int tileY = GameBase.getMap().getTileAtY(EntityManager.getPlayer().getBounds().getCenterY());
 				pathfinderTest.pathfind(
 						AIManager.getNodeMap().getNodeAt(tileX, tileY), 
 						AIManager.getNodeMap().getNodeAt(
-								GameBase.getZone().getTileAtX(toWorldX(ControlManager.getMouseX())), 
-								GameBase.getZone().getTileAtY(toWorldY(ControlManager.getMouseY()))));
+								GameBase.getMap().getTileAtX(toWorldX(ControlManager.getMouseX())), 
+								GameBase.getMap().getTileAtY(toWorldY(ControlManager.getMouseY()))));
 			}
 				pathfinderTest.createPath().render(g);
 				
@@ -147,8 +145,8 @@ public class GraphicsManager {
 			}
 			
 			if(ControlManager.mouseButtonStatus(ControlManager.mouseSecondary)) {
-				int tileX = GameBase.getZone().getTileAtX(toWorldX(ControlManager.getMouseX()));
-				int tileY = GameBase.getZone().getTileAtY(toWorldY(ControlManager.getMouseY()));
+				int tileX = GameBase.getMap().getTileAtX(toWorldX(ControlManager.getMouseX()));
+				int tileY = GameBase.getMap().getTileAtY(toWorldY(ControlManager.getMouseY()));
 				Color oldColor = g.getColor();
 				g.setColor(Color.black);
 				g.drawRect(toLocalX(tileX * 32), toLocalY(tileY * 32), 32, 32);
@@ -185,7 +183,7 @@ public class GraphicsManager {
 	//		((main.particles.ParticleEmitter)particle_system_magic.getEmitter(i)).setPos(ControlManager.getMouseX(), ControlManager.getMouseY());
 	//	}
 		
-		for(ArrayList<Entity_detail_grassblade_med> grass_group : GameBase.getZone().getTallGrass()) {
+		for(ArrayList<Entity_detail_grassblade_med> grass_group : GameBase.getMap().getTallGrass()) {
 			for(Entity_detail_grassblade_med grass_blade : grass_group)
 				if(grass_blade.y <= EntityManager.getPlayer().getY()) 
 					grass_blade.draw();
@@ -193,7 +191,7 @@ public class GraphicsManager {
 
 		renderEntities(g);
 
-		for(ArrayList<Entity_detail_grassblade_med> grass_group : GameBase.getZone().getTallGrass()) {
+		for(ArrayList<Entity_detail_grassblade_med> grass_group : GameBase.getMap().getTallGrass()) {
 			for(Entity_detail_grassblade_med grass_blade : grass_group)
 				if(grass_blade.y >= EntityManager.getPlayer().getY()) 
 					grass_blade.draw();
@@ -276,7 +274,7 @@ public class GraphicsManager {
 	
 	
 	public static void renderMap(Graphics g) {
-		GameBase.getZone().render(-(int)Camera.getAnchorX(), -(int)Camera.getAnchorY());
+		GameBase.getMap().render(-(int)Camera.getAnchorX(), -(int)Camera.getAnchorY());
 	}
 	
 	

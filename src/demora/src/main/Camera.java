@@ -79,8 +79,10 @@ public class Camera {
 					curDist = (newPos.y - pos_y) / (newPos.x - pos_x);
 				}
 				else {
-					Camera.setX(ControlManager.clamp(EntityManager.getPlayer().getX() + 16, GameBase.getWidth()/2, (GameBase.getZone().getWidth()+1) * 32 - GameBase.getWidth()/2));
-					Camera.setY(ControlManager.clamp(EntityManager.getPlayer().getY() + 16, GameBase.getHeight()/2, (GameBase.getZone().getHeight()+1) * 32 - GameBase.getHeight()/2));
+					int x = (int)EntityManager.getPlayer().getBounds().getCenterX();
+					int y = (int)EntityManager.getPlayer().getBounds().getCenterY();
+					Camera.setX(ControlManager.clamp(x, GameBase.getWidth()/2, (GameBase.getMap().getWidth()) * 32 - GameBase.getWidth()/2));
+					Camera.setY(ControlManager.clamp(y, GameBase.getHeight()/2, (GameBase.getMap().getHeight()) * 32 - GameBase.getHeight()/2));
 				}
 			} catch(ArithmeticException e){}
 		}

@@ -44,9 +44,9 @@ public class NodeMap implements Cloneable {
 			}
 		}
 		
-		for(int x = 0; x < width; x++) {
-			for(int y = 0; y < height; y++) {
-				if(GameBase.getZone().blockedByPixel(x * (interval)+16, y * (interval)+16)) {
+		for(int x = 0; x < Math.min(width, GameBase.getMap().getWidth()); x++) {
+			for(int y = 0; y < Math.min(height, GameBase.getMap().getHeight()); y++) {
+				if(GameBase.getMap().blockedAtPixel(x * (interval)+(interval/2), y * (interval)+(interval/2))) {
 					if(x < width && y < height) {
 						map[x][y].setBlocked(true);
 					}
@@ -64,6 +64,9 @@ public class NodeMap implements Cloneable {
 	public void render(Graphics g) {
 		for(int x = 0; x < width; x++) {
 			for(int y = 0; y < height; y++) {
+				//Only render if visible
+				if(!main.Camera.getVisibleArea().contains((x) * interval + 16, (y) * interval + 16)) continue;
+				
 				Color oldColor = g.getColor();
 				g.setColor(map[x][y].isBlocked() ? Color.red : Color.white);
 				g.draw(new Rectangle((x) * interval + 16, (y) * interval + 16, 3, 3));

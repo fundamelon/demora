@@ -116,7 +116,7 @@ public abstract class Entity_mobile implements Entity{
 			Rectangle attempted_bounds = getBounds();
 			attempted_bounds.setX(getBounds().getX() + dx);
 			attempted_bounds.setY(getBounds().getY() + dy);
-			Rectangle[] collisionArray = GameBase.getZone().getCollisionArray();
+			Rectangle[] collisionArray = GameBase.getMap().getCollisionArray();
 			
 			if(PhysUtil.collisions) {
 				for(int i = 0; i < collisionArray.length; i++) {
@@ -124,7 +124,7 @@ public abstract class Entity_mobile implements Entity{
 					Rectangle temp_obs = collisionArray[i];
 					
 					int cushion; //Keep below 8 or it will cause problems
-					if(GameBase.getZone().collisionType(i) == 2) {
+					if(GameBase.getMap().collisionType(i) == 2) {
 						cushion = 8;
 					} else {
 						cushion = 8;
@@ -151,14 +151,14 @@ public abstract class Entity_mobile implements Entity{
 							//If it's within 24 pixels of corner, x movement is blocked,
 							//	and y movement is not zero, then nudge it over
 							//Left edge
-							if(		!GameBase.getZone().blocked(i-1) &&
+							if(		!GameBase.getMap().blocked(i-1) &&
 									getBounds().getX() + getBounds().getWidth()-24 < temp_obs.getX() && 
 									getBounds().getX() + getBounds().getWidth()    > temp_obs.getX() && 
 									dy != 0 && ndx == 0 && dx <= 0) {
 								ndx -= 0.05 * ControlManager.getDelta();
 							}
 							//Right edge
-							if(		!GameBase.getZone().blocked(i+1) &&
+							if(		!GameBase.getMap().blocked(i+1) &&
 									getBounds().getX() > temp_obs.getX() + temp_obs.getWidth()-24 && 
 									getBounds().getX() < temp_obs.getMaxX() + temp_obs.getWidth() && 
 									dy != 0 && ndx == 0 && dx >= 0)	{
@@ -166,14 +166,14 @@ public abstract class Entity_mobile implements Entity{
 							}
 							
 							//Top edge
-							if(		!GameBase.getZone().blocked(i - GameBase.getZone().getWidth()) &&
+							if(		!GameBase.getMap().blocked(i - GameBase.getMap().getWidth()) &&
 									getBounds().getY() + getBounds().getHeight()-24 < temp_obs.getY() && 
 									getBounds().getY() + getBounds().getHeight() > temp_obs.getY()&& 
 									dx != 0 && ndy == 0 && dy >= 0)	{
 								ndy -= 0.05 * ControlManager.getDelta();
 							}
 							//Bottom edge
-							if(		!GameBase.getZone().blocked(i + GameBase.getZone().getWidth()) &&
+							if(		!GameBase.getMap().blocked(i + GameBase.getMap().getWidth()) &&
 									getBounds().getY() > temp_obs.getY() + temp_obs.getHeight()-24 && 
 									getBounds().getY() < temp_obs.getMaxY() + temp_obs.getHeight() && 
 									dx != 0 && ndy == 0 && dy >= 0)	{
@@ -188,8 +188,8 @@ public abstract class Entity_mobile implements Entity{
 			
 			x += ndx;
 			y += ndy;
-			x = ControlManager.clamp(x, 18, GameBase.getZone().getWidth() * 32 + blockSize + 18);
-			y = ControlManager.clamp(y, 18, GameBase.getZone().getHeight() * 32 + blockSize - 18);
+			x = ControlManager.clamp(x, 18, GameBase.getMap().getWidth() * 32 + blockSize + 18);
+			y = ControlManager.clamp(y, 18, GameBase.getMap().getHeight() * 32 + blockSize - 18);
 			
 			//TODO: Jump function goes here
 			

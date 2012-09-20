@@ -1,14 +1,15 @@
 package main;
 
+import main.entity.*;
+import main.gui.*;
+import main.map.*;
+import util.*;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import main.entity.*;
-import main.gui.*;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -24,28 +25,31 @@ import org.newdawn.slick.*;
 import org.newdawn.slick.opengl.*;
 import org.newdawn.slick.openal.*;
 
+import util.Lagmeter;
+
 import Dario.*;
 
 @SuppressWarnings("all")
 public class GameBase {
 	
 
-	private static Zone currentZone;
+	private static Tilemap currentMap;
 
-	/** Current game render mode
-	 * 0: Menu
-	 * 1: Game view
-	 * 2: Console
+	/** Current game render mode.
+	 * 0: menu,
+	 * 1: world,
+	 * 2: console
 	 */
 	public static int viewMode = 0;
 	
 	public static final int VIEW_MENU = 0;
-	public static final int VIEW_GAME = 1;
+	public static final int VIEW_WORLD = 1;
 	public static final int VIEW_CONS = 2;
 	
+	//Debug switches, toggle console reporting and/or display modes.
 	public static boolean debug_keyboard = 	false;
 	public static boolean debug_mouse = 	false;
-	public static boolean debug_graphics = 	false;
+	public static boolean debug_graphics = 	true;
 	public static boolean debug_menu = 		false;
 	public static boolean debug_tileUtil = 	false;
 	
@@ -67,24 +71,23 @@ public class GameBase {
 	static util.Console console;
 	
 	static boolean vsync;
-	public static boolean shading;
+	
 	public static boolean menuVisible;
 	public static boolean paused = true;
 	
 	private static boolean disableFBO = true;
 	
-	private static Shader shader;
 
+	//debug option for easy map toggle
 	public static boolean mapRendering = true;
 	
 	public static void main(String[] args) {
-		
 		GameBase.start();
 	}
 	
 	@SuppressWarnings("all")
 	public static void start() {
-	//	System.out.println(glGetString(GL_VENDOR));
+		System.out.println("//--------------------");
 		try {
 			Display.setDisplayMode(new DisplayMode(800, 600));
 			Display.create();
@@ -92,9 +95,19 @@ public class GameBase {
 			e.printStackTrace();
 			System.exit(0);
 		}
+
+		
+		System.out.println(glGetString(GL_VENDOR));
+		System.out.println(glGetString(GL11.GL_RENDERER));
+		System.out.println("OpenGL "+glGetString(GL_VERSION));
+		System.out.println("//--------------------");
+		
 		Graphics g = new Graphics();
 		
-		loadZone(new Zone("lib/map/pf_testbed.tmx"));
+		//Temporary stub to load map
+		loadMap(new Tilemap("lib/map/pf_testbed.tmx"));
+		System.out.println("Current map: "+getMap().getFilepath());
+		AIManager.generateNodeMap(32, 256, 256);
 		
 		GraphicsManager.init();
 		ControlManager.init();
@@ -106,9 +119,8 @@ public class GameBase {
 
 		initGL();
 		
-		AIManager.generateNodeMap(32, 64, 64);
+		Lagmeter.show();
 		
-	//	shading = true;
 		GraphicsManager.setDebugMode(debug_graphics);
 		
 		
@@ -153,16 +165,60 @@ public class GameBase {
 			System.exit(0);
 
 		ControlManager.update(delta);
+		TransitionManager.updateAll();
 		
 		if(viewMode == VIEW_MENU) {
 			GUIManager.update();
-		} else if(viewMode == VIEW_GAME) {
+		} else if(viewMode == VIEW_WORLD) {
 			EntityManager.update();
 		} 
 		
 		updateFPS(); // update FPS Counter
 	}
-	
+
+	public static void render(Graphics g, float delta) {	
+		if(!disableFBO && GLContext.getCapabilities().GL_EXT_framebuffer_object) {
+			glViewport(0, 0, Display.getWidth(), Display.getHeight());
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, framebufferID);
+		}
+			
+		glClearColor (0.0f, 0.0f, 0.0f, 0.1f);
+		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		switch(viewMode) {
+		case VIEW_MENU:
+			menuVisible = true;
+			break;
+			
+		case VIEW_WORLD:
+	        g.setDrawMode(Graphics.MODE_NORMAL);
+			GraphicsManager.renderGame(g, delta);
+			break;
+			
+		case VIEW_CONS:
+			break;
+			
+		}
+		
+		if(menuVisible) {
+			GUIManager.render(g, delta);
+		}
+		
+		Lagmeter.update();
+		
+		if(!disableFBO && GLContext.getCapabilities().GL_EXT_framebuffer_object) {
+			glEnable(GL_TEXTURE_2D);
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+			glClearColor (0.0f, 1.0f, 0.0f, 0.5f);
+			glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glBindTexture(GL_TEXTURE_2D, colorTextureID); 
+			
+			glDisable(GL_TEXTURE_2D);
+			glFlush();
+		}
+		
+	}
 	
 	public static void setDisplayMode(int width, int height, boolean fullscreen) {
 
@@ -212,6 +268,7 @@ public class GameBase {
 
 	        Display.setDisplayMode(targetDisplayMode);
 	        Display.setFullscreen(fullscreen);
+	        
 				
 	    } catch (LWJGLException e) {
 	        System.out.println("Unable to setup mode "+width+"x"+height+" fullscreen="+fullscreen + e);
@@ -249,6 +306,10 @@ public class GameBase {
 	 */
 	public static long getTime() {
 	    return (Sys.getTime() * 1000) / Sys.getTimerResolution();
+	}
+	
+	public static int getFPS() {
+		return thisFPS;
 	}
 	
 	/**
@@ -300,51 +361,6 @@ public class GameBase {
 		}
 	}
 	
-	public static void render(Graphics g, float delta) {	
-		if(!disableFBO && GLContext.getCapabilities().GL_EXT_framebuffer_object) {
-			glViewport(0, 0, Display.getWidth(), Display.getHeight());
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, framebufferID);
-		}
-			
-		glClearColor (0.0f, 0.0f, 0.0f, 0.1f);
-		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		switch(viewMode) {
-		case VIEW_MENU:
-			menuVisible = true;
-			break;
-			
-		case VIEW_GAME:
-	        g.setDrawMode(Graphics.MODE_NORMAL);
-			GraphicsManager.renderGame(g, delta);
-			break;
-			
-		case VIEW_CONS:
-			break;
-			
-		}
-		
-		if(menuVisible) {
-			GUIManager.render(g, delta);
-		}
-		
-		if(paused) {
-		}
-		
-		if(!disableFBO && GLContext.getCapabilities().GL_EXT_framebuffer_object) {
-			glEnable(GL_TEXTURE_2D);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-			glClearColor (0.0f, 1.0f, 0.0f, 0.5f);
-			glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glBindTexture(GL_TEXTURE_2D, colorTextureID); 
-			
-			glDisable(GL_TEXTURE_2D);
-			glFlush();
-		}
-		
-	}
-	
 	public static int getWidth() {
 		return Display.getWidth();
 	}
@@ -353,9 +369,9 @@ public class GameBase {
 		return Display.getHeight();
 	}
 	
-	public static void loadZone(Zone newZone) {
-		currentZone = newZone;
-		currentZone.init();
+	public static void loadMap(Tilemap newMap) {
+		currentMap = newMap;
+		currentMap.init();
 	}
 	
 	public static int createVBOID() {
@@ -381,8 +397,8 @@ public class GameBase {
 		  }
 	}
 	
-	public static Zone getZone() {
-		return currentZone;
+	public static Tilemap getMap() {
+		return currentMap;
 	}
 	
 	public static String getDateTime() {

@@ -15,7 +15,7 @@ public class Event {
 			GameBase.quit();
 			break;
 		case GAME_START:
-			GameBase.viewMode = GameBase.VIEW_GAME;
+			GameBase.viewMode = GameBase.VIEW_WORLD;
 			GameBase.menuVisible = false;
 			break;
 		case GAME_PAUSE:

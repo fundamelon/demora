@@ -46,12 +46,11 @@ public class ControlManager {
 	
 	public static Entity currentEntity;
 		
-	/**Initialize to preconditional status*/
+	
 	public static void init() {
 		traceCount = 0;
 		
 		setKeyToggle(keyToggleMapRendering);
-		setKeyToggle(keyToggleMeGusta);
 	}
 	
 	/**Run through input devices and update status*/
@@ -149,14 +148,14 @@ public class ControlManager {
 
 		//movement and movement speed controls.
 		if(dx == 0 && smoothTickX > 0)
-			smoothTickX-=0.2;
+			smoothTickX-=0.1;
 		else if(dx != 0 && smoothTickX<1)
-			smoothTickX+=0.2;
+			smoothTickX+=0.1;
 		
 		if(dy == 0 && smoothTickY > 0) 
-			smoothTickY-=0.2;
+			smoothTickY-=0.1;
 		else if(dy != 0 && smoothTickY<1)
-			smoothTickY+=0.2;
+			smoothTickY+=0.1;
 		
 		//Reduce dx and dy by smoothing factors.
 		dx *= smoothTickX;

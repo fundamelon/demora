@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="100" height="100" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="grass1" tilewidth="32" tileheight="32">
+  <image source="../img/grass1.png" width="32" height="32"/>
+ </tileset>
+ <tileset firstgid="2" name="grass3" tilewidth="32" tileheight="32">
+  <image source="../img/grass3.png" width="32" height="32"/>
+ </tileset>
+ <tileset firstgid="3" name="sand_transition" tilewidth="32" tileheight="32">
+  <image source="../img/prog/sand_transition.png" trans="000000" width="160" height="96"/>
+ </tileset>
+ <tileset firstgid="18" name="torch01" tilewidth="32" tileheight="32">
+  <image source="../img/tilesets/generic/torch01.png" width="32" height="32"/>
+ </tileset>
+ <tileset firstgid="19" name="util_0" tilewidth="32" tileheight="32">
+  <image source="../img/tilesets/dev/util_0.png" trans="000000" width="96" height="64"/>
+  <tile id="0">
+   <properties>
+    <property name="collision" value="1"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="25" name="stone1" tilewidth="32" tileheight="32">
+  <image source="../img/stone1.png" width="32" height="32"/>
+ </tileset>
+ <tileset firstgid="26" name="tallgrass" tilewidth="27" tileheight="50">
+  <image source="../img/tilesets/individual/grass_blade0a_small.png" width="27" height="50"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="100" height="100">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3XwQ6DIBBAQeT/P7pXQ6AiERbNHOYgIY3dF205UkrHSS6ur9aZqzb3rEdoj3L25zVtYpr8ux7p2xL9Xd+gd1atd9vo59HXZXSeGjzfI/oe6OuhVdzsa3uf/M3nfo98Yy/ze4zuZW4LPdb06HlfOcetbRJ9D9R7aANtno+9OOvtxfz3osde9NhL+d83V9ZZ26N2FtcDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4gh9OlMpcQJwAAA==
+  </data>
+ </layer>
+ <layer name="util" width="100" height="100">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3X4W7rMAiGYZZb6P3f6/ZjljwGGJxOi8z7SJbbNM3O4St2IgIA53r99z8AP5DHs5DHs5DHs5DHs5DHs5DHs1h5fHyN63t+98hctzMvj2i8Nof33TvXPK2/rf/Pnd54JV575+/0R4c8dnvDykAfj84fWVR6gjxqn1t1v4LPs/V9qfkUu3lk9oHofC8Pca7dpT8s+n7I+j1ba1LUF9n+6L5/WC415hp66360X6z2n8z9lRjvRXrlUb1vjdYhfU50D6fpmnfLY67pyCU6ttpnsn2y2iOsPbxDHnpt0ntIdl+P5kx/eDl0y2PUK7o3Gn0S7SWrPCp9ofcRfc7J9No0jzmH+ZjVM5lcvLVOxK915zz0nqHHpebMfmLtSfq9qHnVQyeLng1Wtc7sJ1ZP6XNEcrXumkel1pd6HeXgXUfU7PVI1zyi+6HVbz2zn9Afvuh3m+mT1XNHdJz++M2r7TysZ5KduluZDlat9bHOeUT9sVqXomz1GKxsvPlkUd0y9VzlURkDeazXl0p/ZHOc+2PQ2Yj8zMP6/CS7dVzt39lraSfXOmNnXanee+2sW9m17TSVfqj2TaZPKk7OYbhbd90bu5lle+Z07+6JbI3nc2fRe/LYz6PyPUnM+jV80R6r6+mtQZmZPHLu3BfRH3+jWqtqf+z8jc6qzxfW96P33jHct/OMyP4BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC6+wR/SmjMQJwAAA==
+  </data>
+ </layer>
+ <layer name="Tile Layer 3" width="100" height="100">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3XbW7DIAwA0Fyj97/ofk3qmAEbNi0L70lT2oSv4RjodQE81+uvB8AX4nEv4nEv4nEv4nEv4nEv4nEv4nEvK/F4Lf716u60+bT36af/n1fi80/2f3o8Mu9/W/Zqrr3ymT7anBCP2vPRvEfPs+Oplv8vVuNR2S+i8lF7V6fsSflRFb3/vTUnus7KVfrO1nuyzLo/Krd6vmrLtOM5QXZuMutQ9nyayYGT4/F5re67K3lSiW377ATZfWG2j0fXTN+ZNk6Mx2i+289R3egatTvKi0rfT5U9z/Rypves106vvdEYToxHdW3KtvX+LHsWOP189X7NlNvZT1b2mlPjUZnr9nNUprq2zfo+wUp+RPeqZyX58V1vDrPvam9OZ/ejMvJjf8/Mznsmpr36q2P7jzI5Ud1Tou+ZMUTtnZwfmfu9clE8qrGN2js1HqP1pZIfO/PWxqZtN3r+NKvzOJu3nbGcbGXfqJy9VtvIrG3M7eTJqLw4jO28s9Uz3Xsd5qprVFRv9l088lZzZXZGE4+6UQwyeXMlr+KRs3Mukh+/Y2U/r+THSh8nq/6+iOqPvvfusW/lN6L9AwAAAAAAAAAAAAAAAAAAAAAAAAAAADjdB/7O/AVAnAAA
+  </data>
+ </layer>
+ <objectgroup name="grass" width="100" height="100">
+  <object x="797" y="293"/>
+  <object x="665" y="240"/>
+  <object x="557" y="197"/>
+  <object x="563" y="288"/>
+  <object x="600" y="267"/>
+  <object x="601" y="223"/>
+  <object x="703" y="223"/>
+  <object x="651" y="190"/>
+  <object x="563" y="142"/>
+  <object x="615" y="195"/>
+  <object x="583" y="163"/>
+  <object x="623" y="130"/>
+  <object x="703" y="161"/>
+  <object x="647" y="153"/>
+  <object x="662" y="278"/>
+  <object x="636" y="329"/>
+  <object x="634" y="301"/>
+  <object x="635" y="241"/>
+  <object x="603" y="245"/>
+  <object x="572" y="252"/>
+  <object x="574" y="233"/>
+  <object x="551" y="239"/>
+  <object x="542" y="264"/>
+  <object x="547" y="292"/>
+  <object x="599" y="332"/>
+  <object x="579" y="296"/>
+  <object x="606" y="290"/>
+  <object x="583" y="274"/>
+  <object x="617" y="255"/>
+  <object x="626" y="274"/>
+  <object x="620" y="216"/>
+  <object x="591" y="201"/>
+  <object x="531" y="236"/>
+  <object x="511" y="256"/>
+  <object x="532" y="313"/>
+  <object x="554" y="362"/>
+  <object x="586" y="397"/>
+  <object x="510" y="395"/>
+  <object x="497" y="351"/>
+  <object x="489" y="302"/>
+  <object x="506" y="290"/>
+  <object x="526" y="289"/>
+  <object x="517" y="271"/>
+  <object x="563" y="267"/>
+  <object x="553" y="219"/>
+  <object x="571" y="213"/>
+  <object x="619" y="232"/>
+  <object x="645" y="223"/>
+  <object x="633" y="202"/>
+  <object x="627" y="179"/>
+  <object x="655" y="168"/>
+  <object x="639" y="171"/>
+  <object x="532" y="152"/>
+  <object x="512" y="124"/>
+  <object x="561" y="97"/>
+  <object x="477" y="116"/>
+  <object x="488" y="172"/>
+  <object x="703" y="333"/>
+  <object x="690" y="390"/>
+  <object x="779" y="382"/>
+  <object x="746" y="285"/>
+  <object x="745" y="132"/>
+  <object x="615" y="56"/>
+  <object x="506" y="85"/>
+  <object x="589" y="242"/>
+  <object x="586" y="220"/>
+ </objectgroup>
+</map>

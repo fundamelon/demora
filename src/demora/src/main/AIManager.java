@@ -19,7 +19,7 @@ public class AIManager {
 	}
 	
 	public static void generateNodeMap(int interval) {
-		generateNodeMap(interval, GameBase.getZone().getWidth(), GameBase.getZone().getHeight());
+		generateNodeMap(interval, GameBase.getMap().getWidth(), GameBase.getMap().getHeight());
 	}
 	
 	public static NodeMap getNodeMap() {
