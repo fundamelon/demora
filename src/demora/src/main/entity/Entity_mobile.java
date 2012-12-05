@@ -1,16 +1,28 @@
 package main.entity;
 
 import java.awt.Point;
+import java.util.ArrayList;
 
+import static java.lang.Math.*;
+
+import main.AIManager;
 import main.ControlManager;
 import main.GameBase;
-import main.PhysUtil;
-import main.pathfinding.Path;
+import main.Physics;
+import main.ai.Path;
+import main.ai.Pathfinder_AStar;
 
 import org.newdawn.slick.Animation;
+import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
+import org.newdawn.slick.TrueTypeFont;
 import org.newdawn.slick.geom.Rectangle;
+import org.newdawn.slick.geom.Shape;
+
+import org.lwjgl.util.vector.*;
+
+import util.Util;
 
 
 public abstract class Entity_mobile implements Entity{
@@ -20,6 +32,11 @@ public abstract class Entity_mobile implements Entity{
 	protected Image TEX_BACK;
 	protected Image TEX_LEFT;
 	protected Image TEX_RIGHT;
+	
+	protected Image TEX_JUMP_FRONT;
+	protected Image TEX_JUMP_BACK;
+	protected Image TEX_JUMP_LEFT;
+	protected Image TEX_JUMP_RIGHT;
 	
 	protected Image[] TEX_RUN_FRONT;
 	protected Image[] TEX_RUN_SIDE;
@@ -35,55 +52,82 @@ public abstract class Entity_mobile implements Entity{
 	
 	protected boolean flipCurImg = false;
 	
-	protected float vel_z;
 	protected int blockSize, dustCount = 0;
-	protected float dist;
 	
 	protected boolean isMoving = false;
 	protected boolean isColliding = false;
+	protected boolean followingPath = false;
+	protected boolean sprinting = false;
 	
+	protected String moveAxis = "x";
 	protected String action = "idle", direction = "front";
 	
 	protected Rectangle bounds = new Rectangle(0, 0, 32, 32);
 	
-	public float moveSpeed = 0.15f, x, y, z, ang;
+	public Vector3f pos = new Vector3f(0, 0, 0);
+	public Vector3f vel = new Vector3f(0, 0, 0);
+	public Vector2f dir = new Vector2f(0, 0);
+	public Vector2f imgPos = new Vector2f(0, 0);
+	public Vector2f tilepos = new Vector2f(0, 0);
+
+	public float velMult;
+	public float ang;
+	public float jumpForce = 0.3f;
+	public float stamina = 100f;
+	
+	public float health = 100f;
+	public float maxHealth = 100f;
+	
+	public float sprintCost = 0.03f;
+	
 	public float img_offset_x=0, img_offset_y=0;
 	public String type = null, name = null;
 	public String currentImage = "lib/img/girl_front_nobg.png";
 	protected Animation[] anims;
 	protected Path currentPath;
+	protected Pathfinder_AStar pathfinder;
 	
 	public void setAnimation() {}
 	
-	public float imgX, imgY;
-	public float dx, dy;
 	
 	public int[] itemTable = new int[128];
 	
-	public abstract void init();
+	public void init() {
+		updateBounds();
+		pathfinder = new Pathfinder_AStar(AIManager.getNodeMap());
+	};
 	
 	public void draw() {};
 	
-	public void move(float ndx, float ndy, float speed) {
-		//Slow the entity down if diagonal
-		if(ndx != 0 && ndy != 0) {
-			ndx *= 0.7;
-			ndy *= 0.7;
-		}
-		dx += ndx*speed*ControlManager.getDelta();
-		dy += ndy*speed*ControlManager.getDelta();
-	}
-
-	public void move(double ndx, double ndy, float speed) {
-		move((float)ndx, (float)ndy, speed);	
+	public void debugDraw(Graphics g) {
+	//	g.setFont(new TrueTypeFont(new java.awt.Font("Helvetica", 10, 10), true));
+		g.setColor(org.newdawn.slick.Color.black);
+		g.drawString("moving:    "+isMoving, pos.x + bounds.getWidth(), pos.y - 40);
+		g.drawString("colliding: "+isColliding, pos.x + bounds.getWidth(), pos.y - 30);
+		g.drawString("following: "+followingPath, pos.x + bounds.getWidth(), pos.y - 20);
 	}
 	
-	public void move(double ndx, double ndy) {
-		move(ndx, ndy, moveSpeed);
+	public void move(Vector2f newDir) {
+		if(!isJumping()) {
+			dir = newDir;
+		} else {
+			dir.x += newDir.x * 0.003f * ControlManager.getDelta();
+			dir.y += newDir.y * 0.003f * ControlManager.getDelta();
+		}
+		
+		if(dir.length() != 0)
+			dir.normalise();
+		
+		vel.x += dir.x * velMult;
+		vel.y += dir.y * velMult;
 	}
 	
 	public void setPath(Path in) {
 		currentPath = in;
+	}
+	
+	public void setFollowPath(boolean a) {
+		followingPath = a;
 	}
 	
 	public void followPath(Path in) {
@@ -91,140 +135,167 @@ public abstract class Entity_mobile implements Entity{
 			System.out.println("Path completed");
 			return;
 		}
-		float targetAng = (float)Math.atan((in.nextStep().getY() - y)/(in.nextStep().getX() - x));
-		move(Math.cos(targetAng), Math.sin(targetAng), moveSpeed);
+		Vector2f target = new Vector2f((in.nextStep().getX()*32 - pos.x), (in.nextStep().getY()*32 - pos.y));
+		move(target);
+		target = new Vector2f((in.nextStep().getX()*32 - pos.x), (in.nextStep().getY()*32 - pos.y));
+		float radius = 8;
+		if(target.length() <= radius) {
+			in.nextStep().setVisited(true);
+		}
+	}
+	
+	public void followPath() {
+		followPath(currentPath);
 	}
 	
 
 	public void update() {
-		//	System.out.println("Moving player, dx: "+dx+", dy:"+dy);
-			if(cur_anim != null)
-				cur_anim.update((long)(Math.ceil(ControlManager.getDelta())));
+			if(cur_anim != null) {
+				if(isSprinting()) {
+					cur_anim.update((long)(ControlManager.getDelta() * 1.5f));
+				} else {
+					cur_anim.update((long)(ControlManager.getDelta()));
+				}
+			}
+			
+			if(isJumping()) {
+				vel.z -= Physics.gravity * ControlManager.getDelta();
+				if(pos.z + (vel.z) <= 0 && vel.z <= 0) {
+					pos.z = 0;
+					vel.z = 0;
+					if(cur_anim != null && cur_anim.isStopped()) {
+						cur_anim.start();
+						cur_anim.setCurrentFrame((cur_anim.getFrame()+1) % cur_anim.getFrameCount());
+					}
+				} else {
+					setAction("jump");
+				}
+			}
+
+			pos.z += vel.z * ControlManager.getDelta();
+			
 			
 			//skip if not moving
-			if(dx == 0 && dy == 0) {
+			if(vel.x == 0 && vel.y == 0 && !isJumping()) {
 				if(isMoving) {
 					isMoving = false; 
 					setAction("idle");
 				}
-				return;
-			} else isMoving = true;
+			//	return;
+			} else if(!isJumping()) {
+				isMoving = true;
+			//	System.out.println("Moving player, vel.x: "+vel.x+", vel.y:"+vel.y);
+			}
+
+			if(isSprinting() && isMoving()) {
+				float cost = sprintCost * ControlManager.getDelta();
+				if(stamina - cost > 0) {
+					if(!isJumping()) {
+						stamina -= cost;
+					}
+				} else {
+					stamina = 0;
+					stopSprint();
+				}
+			} else {
+				float gain = 0.03f * ControlManager.getDelta();
+				if(stamina + gain < 100) {
+					stamina += gain;
+				} else {
+					stamina = 100;
+				}
+			}
 			
-			float ndx = dx, ndy = dy;
+		//	System.out.println("Velocity x="+vel.x+" y="+vel.y+" z="+vel.z);
+			
+			Vector2f newvel = new Vector2f(vel.x, vel.y);
 			isColliding = false;
 			
-			Rectangle attempted_bounds = getBounds();
-			attempted_bounds.setX(getBounds().getX() + dx);
-			attempted_bounds.setY(getBounds().getY() + dy);
-			Rectangle[] collisionArray = GameBase.getMap().getCollisionArray();
 			
-			if(PhysUtil.collisions) {
-				for(int i = 0; i < collisionArray.length; i++) {
-				//	Rectangle temp_obs = new Rectangle(100, 100, 100, 100);
-					Rectangle temp_obs = collisionArray[i];
+			if(Physics.collisions) {
+				ArrayList<Shape>collisionArray = GameBase.getMap().getNearbyObstacles(this.tilepos.x, this.tilepos.y);
+				for(int i = 0; i < collisionArray.size(); i++) {
+					if(	collisionArray.get(i) == null )
+						continue;
 					
-					int cushion; //Keep below 8 or it will cause problems
+					Shape temp_obs = collisionArray.get(i);
+
+					Shape attempted_bounds = getBounds();
+					attempted_bounds.setX(getBounds().getX() + newvel.x * ControlManager.getDelta());
+					attempted_bounds.setY(getBounds().getY() + newvel.y * ControlManager.getDelta());
+					
+					int cushion = 0;
 					if(GameBase.getMap().collisionType(i) == 2) {
-						cushion = 8;
-					} else {
-						cushion = 8;
+						cushion = 1;
 					}
-					if(temp_obs != null && Point.distance(getBounds().getCenterX(), getBounds().getCenterY(), temp_obs.getCenterX(), temp_obs.getCenterY()) < bounds.getBoundingCircleRadius()*2-cushion) {
-						if(PhysUtil.collision(attempted_bounds, temp_obs)) {
-							isColliding = true;
-							
-							temp_obs.setY(temp_obs.getY() + dy);
-							
-							if(PhysUtil.collision(getBounds(), temp_obs)) {
-								ndx = 0;
-							}
-				
-							temp_obs.setX(temp_obs.getX() + dx);
-							temp_obs.setY(temp_obs.getY() - dy);
-							
-							if(PhysUtil.collision(getBounds(), temp_obs)) {
-								ndy = 0;
-							}
-							
-							temp_obs.setX(temp_obs.getX() - dx);
-							
-							//If it's within 24 pixels of corner, x movement is blocked,
-							//	and y movement is not zero, then nudge it over
-							//Left edge
-							if(		!GameBase.getMap().blocked(i-1) &&
-									getBounds().getX() + getBounds().getWidth()-24 < temp_obs.getX() && 
-									getBounds().getX() + getBounds().getWidth()    > temp_obs.getX() && 
-									dy != 0 && ndx == 0 && dx <= 0) {
-								ndx -= 0.05 * ControlManager.getDelta();
-							}
-							//Right edge
-							if(		!GameBase.getMap().blocked(i+1) &&
-									getBounds().getX() > temp_obs.getX() + temp_obs.getWidth()-24 && 
-									getBounds().getX() < temp_obs.getMaxX() + temp_obs.getWidth() && 
-									dy != 0 && ndx == 0 && dx >= 0)	{
-								ndx += 0.05 * ControlManager.getDelta();
-							}
-							
-							//Top edge
-							if(		!GameBase.getMap().blocked(i - GameBase.getMap().getWidth()) &&
-									getBounds().getY() + getBounds().getHeight()-24 < temp_obs.getY() && 
-									getBounds().getY() + getBounds().getHeight() > temp_obs.getY()&& 
-									dx != 0 && ndy == 0 && dy >= 0)	{
-								ndy -= 0.05 * ControlManager.getDelta();
-							}
-							//Bottom edge
-							if(		!GameBase.getMap().blocked(i + GameBase.getMap().getWidth()) &&
-									getBounds().getY() > temp_obs.getY() + temp_obs.getHeight()-24 && 
-									getBounds().getY() < temp_obs.getMaxY() + temp_obs.getHeight() && 
-									dx != 0 && ndy == 0 && dy >= 0)	{
-								ndy += 0.05 * ControlManager.getDelta();
-							}
-						}
+			
+				//	System.out.println("- - - -");
+					Vector2f impulse = Physics.splitAxisCollision(temp_obs, attempted_bounds);						
+					if(impulse.length() > 0) {
+						isColliding = true;
+				//		System.out.println("Collision detected");
+				//		impulse.scale(1f);
+				//		System.out.println("impulse x="+impulse.x+" y="+impulse.y);
+						newvel.x += impulse.x / ControlManager.getDelta();
+						newvel.y += impulse.y / ControlManager.getDelta();
 					}
 				}
 			}
 			
-			dist = Math.abs(ndx) + Math.abs(ndy);
 			
-			x += ndx;
-			y += ndy;
-			x = ControlManager.clamp(x, 18, GameBase.getMap().getWidth() * 32 + blockSize + 18);
-			y = ControlManager.clamp(y, 18, GameBase.getMap().getHeight() * 32 + blockSize - 18);
+			pos.x += newvel.x * ControlManager.getDelta();
+			pos.y += newvel.y * ControlManager.getDelta();
 			
-			//TODO: Jump function goes here
+			pos.x = Util.clamp(pos.x, 18, GameBase.getMap().getWidth() * 32 + blockSize + 18);
+			pos.y = Util.clamp(pos.y, 18, GameBase.getMap().getHeight() * 32 + blockSize - 18);
 			
-			// direction controller
-			if(dist == 0) {
-				setAction("idle");
-			//	System.out.println("Zero distance");
-			}
-			else if(dx * dy == 0) {
-				String newDirection;
-				if(dx < 0)
+			updateBounds();
+		}
+	
+	
+	public void updateDirection() {
+		// direction controller
+		if(isJumping()) {
+			setAction("jump");
+			return;
+		}
+		String newDirection = "";
+		float velDiff = abs(vel.x) - abs(vel.y);
+		if(velDiff > 0.001) {
+			moveAxis = "x";
+		} else if(velDiff < 0) {
+			moveAxis = "y";
+		}
+		
+		if(vel.length() != 0) {
+			if(moveAxis.equals("x")) {
+				if(vel.x < 0)
 					newDirection = "left";
-				else if(dx > 0)
+				else 
 					newDirection = "right";
-				else if(dy < 0)
+			} else if(moveAxis.equals("y")) {
+				if(vel.y < 0)
 					newDirection = "back";
 				else
 					newDirection = "front";
-				
-				setAction("move", newDirection);
 			}
-					
-			updateBounds();
-			
-			dx = 0;
-			dy = 0;
+			direction = newDirection;
+			setAction("move");
+		} else {
+			setAction("idle");
 		}
-
-	private void setAction(String newAction) {
-		setAction(newAction, direction);
 	}
 	
-	protected void setAction(String newAction, String newDirection) {
+	public void finalize() {
+		vel.x = 0;
+		vel.y = 0;
+	}
+	
+	/** Updates the entity's animation or image based on input action and existing direction. */
+	protected void setAction(String newAction) {
+		if(GameBase.paused) return; 
 		if(newAction == "move"){
-			if(newDirection == "left") {
+			if(direction.equals("left")) {
 				if(cur_anim == null || !cur_anim.equals(ANIM_RUN_LEFT)) {
 					cur_anim = ANIM_RUN_LEFT;
 					cur_anim.setPingPong(false);
@@ -232,9 +303,7 @@ public abstract class Entity_mobile implements Entity{
 				}
 				
 				flipCurImg = false;
-			}
-			
-			else if(newDirection == "right") {
+			} else if(direction.equals("right")) {
 				if(cur_anim == null || !cur_anim.equals(ANIM_RUN_RIGHT)) {
 					cur_anim = ANIM_RUN_RIGHT;
 					cur_anim.setPingPong(false);
@@ -242,9 +311,7 @@ public abstract class Entity_mobile implements Entity{
 				}
 				
 				flipCurImg = true;
-			}
-			
-			else if(newDirection == "back") {
+			} else if(direction.equals("back")) {
 				if(cur_anim == null || !cur_anim.equals(ANIM_RUN_BACK)) {
 					cur_anim = ANIM_RUN_BACK;
 					cur_anim.setPingPong(false);
@@ -252,9 +319,7 @@ public abstract class Entity_mobile implements Entity{
 				}
 				
 				flipCurImg = false;
-			}
-			
-			else if(newDirection == "front") {
+			} else if(direction.equals("front")) {
 				if(cur_anim == null || !cur_anim.equals(ANIM_RUN_FRONT)) {
 					cur_anim = ANIM_RUN_FRONT;
 					cur_anim.setPingPong(true);
@@ -263,54 +328,40 @@ public abstract class Entity_mobile implements Entity{
 				
 				flipCurImg = false;
 			}
-			
-			else {
-				System.out.println("Invalid direction: \""+newDirection+"\"");
-				return;
-			}
-			direction = newDirection;
-		}
-		
-		else if(newAction == "idle") {
+		} else if(newAction == "jump"){
 			if(cur_anim != null && !cur_anim.isStopped()) cur_anim.stop();
-			if(newDirection == "left") {
+		} else if(newAction == "idle") {
+			if(cur_anim != null && !cur_anim.isStopped()) cur_anim.stop();
+			if(cur_anim == ANIM_RUN_LEFT) {
 				cur_anim = null;
 				cur_img = TEX_LEFT;
 				
 				flipCurImg = false;
-			}
-			
-			else if(newDirection == "right") {
+			} else if(cur_anim == ANIM_RUN_RIGHT) {
 				cur_anim = null;
 				cur_img = TEX_RIGHT;
 				
 				flipCurImg = false;
-			}
-			
-			else if(newDirection == "back") {
+			} else if(cur_anim == ANIM_RUN_BACK) {
 				cur_anim = null;
 				cur_img = TEX_BACK;
 				
 				flipCurImg = false;
-			}
-			
-			else if(newDirection == "front") {
+			} else if(cur_anim == ANIM_RUN_FRONT) {
 				cur_anim = null;
 				cur_img = TEX_FRONT;
 				
 				flipCurImg = false;
 			}
-			
-			else {
-				System.out.println("Invalid direction: \""+newDirection+"\"");
-				return;
-			}
 		//	System.out.println("Set action to idle");
-		}
-		else
+		} else
 			System.out.println("Invalid action: \""+newAction+"\"");
 		
-		direction = newDirection;
+		if(GameBase.debug_animation)
+			if(cur_anim == null)
+				System.out.println(cur_img.toString());
+			else
+				System.out.println(cur_anim.toString());
 	}
 
 	public void resizeBounds(float newWidth, float newHeight) {
@@ -319,38 +370,44 @@ public abstract class Entity_mobile implements Entity{
 	}
 
 	public void updateBounds() {
-		bounds.setX(x - getBounds().getWidth()/2);
-		bounds.setY(y + getBounds().getHeight()/2);
+		bounds.setLocation(pos.x - getBounds().getWidth()/2, pos.y + getBounds().getHeight()/2);
+		tilepos.x = GameBase.getMap().getTileAtX(pos.x);
+		tilepos.y = GameBase.getMap().getTileAtY(pos.y);
 	}
 	
 	public void damage() {}
-
 	
 	public String getType() {
 		return type;
 	}
+	
 	public String getName() {
 		return name;
 	}
-
-	public float getX() {return x;}
-	public float getY() {return y;}
-	public float getZ() {return z;}
 	
-	public int getImgX() {
-		return (int)imgX;
+	
+	public Vector pos() {
+		return pos;
+	}
+
+	public float getX() {return pos.x;}
+	public float getY() {return pos.y;}
+	public float getZ() {return pos.z;}
+	
+	public Vector getImgPos() {
+		return imgPos;
 	}
 	
-	public int getImgY() {
-		return (int)imgY;
+	public Vector vel() {
+		return vel;
 	}
 	
 	public float getDX() {
-		return dx;
+		return vel.x;
 	}
 	
 	public float getDY() {
-		return dy;
+		return vel.y;
 	}
 	
 	public Image getImg() {
@@ -373,17 +430,61 @@ public abstract class Entity_mobile implements Entity{
 	public void setImg(String newPath) {
 		currentImage = newPath;
 	}
+	
+	public Path getCurrentPath() {
+		return currentPath;
+	}
 
 	public void setVelZ(float newVel) {
-		vel_z = newVel;
+		vel.z = newVel;
 	}
 	
 	public boolean isJumping() {
-		return z == 0 ? false : true;
+		return (pos.z == 0 && vel.z == 0) ? false : true;
 	}
 
-	public void jump() {
-		this.vel_z += 300;
+	
+	public void startSprint() {
+		if(stamina > 0 && !isJumping()) {
+			sprinting = true;
+		} else {
+			sprinting = false;
+		}
 	}
+	public void stopSprint() {
+		sprinting = false;
+	}
+	public boolean isSprinting() {
+		return sprinting;
+	}
+	
+	public float getStaminaFraction() {
+		return stamina / 100;
+	}
+	
+	public boolean hasCollisions() {
+		return true;
+	}
+	
+	public boolean isMoving() {
+		return isMoving;
+	}
+	
+	public void jump() {
+		if(!isJumping()) {
+			this.vel.z += jumpForce;
+		}
+	}
+	
+	public float getHealth() {
+		return health;
+	}
+	
+	public float getTotalHealth() {
+		return maxHealth;
+	}
+	
+	public void drawFgEffects() {}
+	public void drawBgEffects() {}
 
 }

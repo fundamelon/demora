@@ -38,11 +38,6 @@ public class Lagmeter {
 	public static Transition slider = new Transition(200, 0, 300);
 	
 	public static void update() {
-		if(ControlManager.keyPressed(Keyboard.KEY_8)) {
-			if(toggle) show();
-			else hide();
-			toggle = !toggle;
-		}
 		
 		setOffsetY((int)slider.getCurVal());
 		
@@ -55,10 +50,11 @@ public class Lagmeter {
 		if(offsetY == 200) inView = false;
 		else inView = true;
 
+	}
+	public static void render(Graphics g) {
 		if(!inView) return;
 		
 		//Render the graph		
-		Graphics g = new Graphics();
 		float w = GameBase.getWidth();
 		float h = GameBase.getHeight();
 		
@@ -106,6 +102,12 @@ public class Lagmeter {
 		g.drawString("  fps: "+GameBase.getFPS(), w-250, h-175);
 		
 		g.translate(0, -offsetY);
+	}
+	
+	public static void toggle() {
+		if(toggle) show();
+		else hide();
+		toggle = !toggle;
 	}
 	
 	public static void show() {

@@ -1,4 +1,4 @@
-package org.newdawn.slick.particles;
+package main.particles;
 
 /**
  * A description of any class that can create Configurable Emitters during the ParticleIO

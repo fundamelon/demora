@@ -1,19 +1,26 @@
 package main;
 
 import main.entity.*;
+import main.map.Detail_fog_overlay;
+
+import org.lwjgl.opengl.Display;
+import org.lwjgl.util.vector.*;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+
+import util.Lagmeter;
+import util.Util;
 
 
 @SuppressWarnings("all")
 public class ControlManager {
 	
 	//declaration of characters to watch for 
-	private static char KEY_MOVE_NORTH = "W".charAt(0);
-	private static char KEY_MOVE_SOUTH = "S".charAt(0);
-	private static char KEY_MOVE_EAST  = "D".charAt(0);
-	private static char KEY_MOVE_WEST  = "A".charAt(0);
+	private static char KEY_MOVE_N = "W".charAt(0);
+	private static char KEY_MOVE_S = "S".charAt(0);
+	private static char KEY_MOVE_E  = "D".charAt(0);
+	private static char KEY_MOVE_W  = "A".charAt(0);
 	private static float smoothTickX = 0, smoothTickY = 0;
 	private static boolean anyKeysPressed = false;
 	
@@ -26,7 +33,9 @@ public class ControlManager {
 	private static float[] mouseTraceY = new float[64];
 	private static int traceCount;
 	
-	private static int mousePrevX = 0, mousePrevY = 0, mouseDX, mouseDY;
+	private static int mousePrevX = 0, mousePrevY = 0;
+	
+	public static Vector2f mouseDX;
 	
 	private static boolean[] mouseButtonStatus = new boolean[16];
 	private static boolean[] mouseButtonClicked = new boolean[16];
@@ -34,7 +43,6 @@ public class ControlManager {
 	
 	
 	public static int keyToggleMapRendering = Keyboard.KEY_M;
-	public static int keyToggleMeGusta = Keyboard.KEY_N;
 	
 	
 	public static int mousePrimary = 0;
@@ -57,27 +65,62 @@ public class ControlManager {
 	public static void update(float delta2) {
 		ControlManager.delta = delta2;
 
-		if(ControlManager.keyStatus(Keyboard.KEY_O)) {
-			EntityManager.getPlayer().followPath(GraphicsManager.pathfinderTest.createPath());
+		
+		if(keyPressed(Keyboard.KEY_F)) {
+		 	GameBase.setDisplayMode(800, 600, !Display.isFullscreen());
+		}
+		if(keyPressed(Keyboard.KEY_V)) {
+		  GameBase.vsync = !GameBase.vsync;
+		  Display.setVSyncEnabled(GameBase.vsync);
+		}
+
+		if(keyStatus(Keyboard.KEY_O)) {
+			EntityManager.getPlayer().followPath();
+		}
+		if(keyStatus(Keyboard.KEY_P)) {
+			int tileX = GameBase.getMap().getTileAtX(EntityManager.getPlayer().getBounds().getCenterX());
+			int tileY = GameBase.getMap().getTileAtY(EntityManager.getPlayer().getBounds().getCenterY());
+			main.ai.Node target = AIManager.getNodeMap().getNodeAt(
+					GameBase.getMap().getTileAtX(Util.toWorldX(ControlManager.getMouseX())), 
+					GameBase.getMap().getTileAtY(Util.toWorldY(ControlManager.getMouseY())));
+			if(target != null && !target.isBlocked())
+				EntityManager.getPlayer().setPath(target);
+		}
+
+		
+		if(keyPressed(Keyboard.KEY_ESCAPE)) {
+			GameBase.toggleIngameMenu();
+		//	System.exit(0);
+		}
+
+		if(keyPressed(Keyboard.KEY_5)){
+			//refer to GraphicsManager
+		}
+		
+		if(keyPressed(Keyboard.KEY_6)){
+			Camera.toggleShake();
+		}
+		
+		if(keyPressed(Keyboard.KEY_7)) {
+			GraphicsManager.fadeToggle();
+		}
+		if(keyPressed(Keyboard.KEY_8)) {
+			Lagmeter.toggle();
+		}
+		if(keyPressed(Keyboard.KEY_9)) {
+			Detail_fog_overlay.toggle();
 		}
 		
 		updatePlayerCtrls();
 		updateMouseButtons();
 		updateKeys();
 		
-//		if(keyStatus(keyToggleMapRendering)) {
-//			System.out.println("Map rendering: ON! :D");
-//		} else {
-//			System.out.println("Map rendering: OFF! :C");
-//		}
-		
 		mouseTraceX[traceCount] = Mouse.getX();
 		mouseTraceY[traceCount] = Mouse.getY();
 		traceCount++;
 		traceCount %= mouseTraceX.length;
 		
-		mouseDX = Mouse.getDX();
-		mouseDY = Mouse.getDY();
+		mouseDX = new Vector2f(Mouse.getDX(), Mouse.getDY());
 		
 	}
 	
@@ -112,68 +155,74 @@ public class ControlManager {
 		return GameBase.getHeight() - Mouse.getY();
 	}
 	
-	public static int getMouseDX() {
+	public static Vector getMouseDX() {
 		return mouseDX;
-	}
-	
-	public static int getMouseDY() {
-		return mouseDY;
 	}
 	
 	/**
 	 * Function fired regardless of keys pressed; keys are additively combined
 	 */
 	public static void updatePlayerCtrls() {
-		//dx and dy are distance x and y respectively - these are sent to the player.
-		float dx=EntityManager.getPlayer().getDX(), dy=EntityManager.getPlayer().getDY();
+		Entity_player player = EntityManager.getPlayer();
+		Vector2f newVel = new Vector2f(player.vel.x, player.vel.y);
 		boolean anyKeysPressed = false;
-
+		
 		//Get keys pressed.
 		if(Keyboard.isKeyDown(Keyboard.KEY_W)){
-			dy = dy - 1;
+			newVel.y = newVel.y - 1;
 			anyKeysPressed = true;
 		}
 		if(Keyboard.isKeyDown(Keyboard.KEY_S)){
-			dy = dy + 1;
+			newVel.y = newVel.y + 1;
 			anyKeysPressed = true;
 		}
 		if(Keyboard.isKeyDown(Keyboard.KEY_D)){
-			dx = dx + 1;
+			newVel.x = newVel.x + 1;
 			anyKeysPressed = true;
 		}
 		if(Keyboard.isKeyDown(Keyboard.KEY_A)){
-			dx = dx - 1;
+			newVel.x = newVel.x - 1;
 			anyKeysPressed = true;
+		}
+		if(Keyboard.isKeyDown(Keyboard.KEY_SPACE)){
+			player.jump();
+		}
+		if(keyPressed(Keyboard.KEY_LSHIFT)) {
+			player.startSprint();
+		}
+		if(keyReleased(Keyboard.KEY_LSHIFT)) {
+			player.stopSprint();
 		}
 
 		//movement and movement speed controls.
-		if(dx == 0 && smoothTickX > 0)
-			smoothTickX-=0.1;
-		else if(dx != 0 && smoothTickX<1)
-			smoothTickX+=0.1;
+		/*
+		if(newVel.x == 0 && smoothTickX > 0)
+			smoothTickX-=0.001 * delta;
+		else if(newVel.x != 0 && smoothTickX<1)
+			smoothTickX+=0.001 * delta;
 		
-		if(dy == 0 && smoothTickY > 0) 
-			smoothTickY-=0.1;
-		else if(dy != 0 && smoothTickY<1)
-			smoothTickY+=0.1;
+		if(newVel.y == 0 && smoothTickY > 0) 
+			smoothTickY-=0.001 * delta;
+		else if(newVel.y != 0 && smoothTickY<1)
+			smoothTickY+=0.001 * delta;
 		
 		//Reduce dx and dy by smoothing factors.
-		dx *= smoothTickX;
-		dy *= smoothTickY;
+	//	newVel = new Vector2f(newVel.x * smoothTickX, newVel.y * smoothTickY);
 		
 		//Reset smoothing if you're at a standstill.
 		if(!anyKeysPressed) {
-	//		playerMoveClk.stop();
 			smoothTickX = 0;
 			smoothTickY = 0;
 		}
-	//	DEBUG: System.out.println("Player asked to move by "+dx+", "+dy);
+	//	DEBUG: System.out.println("Player asked to move by "+newVel.x+", "+newVel.y);
 		
 		if(!anyKeysPressed) {
 		//	System.out.println("No keys pressed to move player.");
 		}
-	//	System.out.println(delta);
-		EntityManager.getPlayer().move(dx, dy);
+		
+		*/
+		
+		player.move(newVel);
 	}
 	
 	
@@ -292,29 +341,8 @@ public class ControlManager {
 		return mouseButtonReleased[i];
 	}
 	
-	public static char getKeyN() {return KEY_MOVE_NORTH;}
-	public static char getKeyS() {return KEY_MOVE_SOUTH;}
-	public static char getKeyE() {return KEY_MOVE_EAST;}
-	public static char getKeyW() {return KEY_MOVE_WEST;}
-	
-	/**
-	 * Clamp a number i between high and low limits
-	 * @param i - number to clamp
-	 * @param high - upper limit
-	 * @param low - lower limit
-	 * @return clamped value
-	 */
-	public static double clamp(double i, double high, double low) {
-		return Math.max(high, Math.min(i, low));
-	}
-	
-	/**Identical to {@link main.ControlManager#clamp(double, double, double) clamp()}*/
-	public static float clamp(float i, float high, float low) {
-		return Math.max(high, Math.min(i, low));
-	}
-	
-	/**Identical to {@link main.ControlManager#clamp(double, double, double) clamp()}*/
-	public static int clamp(int i, int high, int low) {
-		return Math.max(high, Math.min(i, low));
-	}
+	public static char getKeyN() {return KEY_MOVE_N;}
+	public static char getKeyS() {return KEY_MOVE_S;}
+	public static char getKeyE() {return KEY_MOVE_E;}
+	public static char getKeyW() {return KEY_MOVE_W;}
 }

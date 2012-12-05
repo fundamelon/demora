@@ -73,6 +73,8 @@ public class Test_lwjgl {
 		    }
 		}
 		
+	//	Display.sync(60);
+		
 		if(Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
 			System.exit(0);
 			

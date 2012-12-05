@@ -28,8 +28,7 @@ import org.newdawn.slick.openal.*;
 import util.Lagmeter;
 
 import Dario.*;
-
-@SuppressWarnings("all")
+ 
 public class GameBase {
 	
 
@@ -46,12 +45,19 @@ public class GameBase {
 	public static final int VIEW_WORLD = 1;
 	public static final int VIEW_CONS = 2;
 	
+	public static boolean closeRequested = false;
+	
 	//Debug switches, toggle console reporting and/or display modes.
 	public static boolean debug_keyboard = 	false;
 	public static boolean debug_mouse = 	false;
-	public static boolean debug_graphics = 	true;
+	public static boolean debug_graphics = 	false;
 	public static boolean debug_menu = 		false;
 	public static boolean debug_tileUtil = 	false;
+	public static boolean debug_animation = false;
+	public static boolean debug_pathfinder= true;
+	public static boolean debug_entities  = true;
+	
+	public static Graphics g;
 	
 	private static int colorTextureID;
 	private static int framebufferID;
@@ -78,7 +84,7 @@ public class GameBase {
 	private static boolean disableFBO = true;
 	
 
-	//debug option for easy map toggle
+	//debug option for easy map visibility toggle
 	public static boolean mapRendering = true;
 	
 	public static void main(String[] args) {
@@ -90,6 +96,7 @@ public class GameBase {
 		System.out.println("//--------------------");
 		try {
 			Display.setDisplayMode(new DisplayMode(800, 600));
+			Display.destroy();
 			Display.create();
 		} catch (LWJGLException e) {
 			e.printStackTrace();
@@ -102,11 +109,11 @@ public class GameBase {
 		System.out.println("OpenGL "+glGetString(GL_VERSION));
 		System.out.println("//--------------------");
 		
-		Graphics g = new Graphics();
+		g = new Graphics();
 		
 		//Temporary stub to load map
-		loadMap(new Tilemap("lib/map/pf_testbed.tmx"));
-		System.out.println("Current map: "+getMap().getFilepath());
+		loadMap(new Tilemap("lib/map/graphics_testbed.tmx"));
+		System.out.println("Map loaded: "+getMap().getFilepath());
 		AIManager.generateNodeMap(32, 256, 256);
 		
 		GraphicsManager.init();
@@ -114,64 +121,52 @@ public class GameBase {
 		EntityManager.init();
 		AIManager.init();
 		GUIManager.init();
+		Lagmeter.update(); //Required on first run to fix bugs.
+		
+	//	testQT = new QuadTree();
+	//	testQT.init();
 		
 		g.setFont(new TrueTypeFont(new java.awt.Font("Helvetica", 10, 10), true));
-
+		g.setAntiAlias(false);
 		initGL();
 		
-		Lagmeter.show();
-		
 		GraphicsManager.setDebugMode(debug_graphics);
-		
-		
 		
 		getDelta(); // call once before loop to initialise lastFrame
 		lastFPS = getTime(); // call before loop to initialise fps timer
 
-		while (!Display.isCloseRequested()) {
+		while (!Display.isCloseRequested() && !closeRequested) {
 			float delta = getDelta();
+			if(paused) delta = 0;
 
 			Display.setTitle("Demora (Testbed) FPS: " + thisFPS + "  Particles: "+GraphicsManager.getParticleCount());
-			
+
+		//	testQT.scanEntities(EntityManager.entityTable);
 			update(delta);
 			render(g, delta);
 
 			Display.update();
 			g.clear();
-			Display.sync(60); // cap fps
+			Display.sync(100); // cap fps
 		}
 
 		Display.destroy();
 	}
 	
 	public static void update(float delta) {
-		
-		//Keyboard Event Handlers!!
-		//TODO: Move to ControlManager
-		
-		while (Keyboard.next()) {
-		    if (Keyboard.getEventKeyState()) {
-		        if (Keyboard.getEventKey() == Keyboard.KEY_F) {
-		        	setDisplayMode(800, 600, !Display.isFullscreen());
-		        }
-		        else if (Keyboard.getEventKey() == Keyboard.KEY_V) {
-		        	vsync = !vsync;
-		        	Display.setVSyncEnabled(vsync);
-		        }
-		    }
-		}
-		
-		if(Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
-			System.exit(0);
-
 		ControlManager.update(delta);
 		TransitionManager.updateAll();
+		TimerSet.updateAll();
 		
 		if(viewMode == VIEW_MENU) {
 			GUIManager.update();
 		} else if(viewMode == VIEW_WORLD) {
 			EntityManager.update();
 		} 
+		
+		if(!paused) {
+			Lagmeter.update();
+		}
 		
 		updateFPS(); // update FPS Counter
 	}
@@ -194,6 +189,12 @@ public class GameBase {
 		case VIEW_WORLD:
 	        g.setDrawMode(Graphics.MODE_NORMAL);
 			GraphicsManager.renderGame(g, delta);
+			if(menuVisible) {
+				GraphicsManager.renderMenuOverlay(g);
+				paused = true;
+			} else {
+				paused = false;
+			}
 			break;
 			
 		case VIEW_CONS:
@@ -205,7 +206,9 @@ public class GameBase {
 			GUIManager.render(g, delta);
 		}
 		
-		Lagmeter.update();
+		Lagmeter.render(g);
+		
+	//	testQT.draw();
 		
 		if(!disableFBO && GLContext.getCapabilities().GL_EXT_framebuffer_object) {
 			glEnable(GL_TEXTURE_2D);
@@ -217,6 +220,8 @@ public class GameBase {
 			glDisable(GL_TEXTURE_2D);
 			glFlush();
 		}
+		
+		
 		
 	}
 	
@@ -369,6 +374,12 @@ public class GameBase {
 		return Display.getHeight();
 	}
 	
+	public static void toggleIngameMenu() {
+		if(viewMode != VIEW_MENU) {
+			menuVisible = !menuVisible;
+		}
+	}
+	
 	public static void loadMap(Tilemap newMap) {
 		currentMap = newMap;
 		currentMap.init();
@@ -408,6 +419,14 @@ public class GameBase {
     }
 
 	public static void quit() {
-		Display.destroy();
+		closeRequested = true;
+	}
+
+	public static String getVersion() {
+		return "0.0x";
+	}
+	
+	public static boolean isInGame() {
+		return viewMode == VIEW_WORLD;
 	}
 }

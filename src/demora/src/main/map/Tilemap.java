@@ -5,17 +5,21 @@ import java.util.Map;
 import java.util.Random;
 
 import main.GameBase;
-import main.entity.Entity_detail_grassblade_med;
-import main.pathfinding.NodeMap;
+import main.ai.NodeMap;
 import org.newdawn.slick.geom.Rectangle;
+import org.newdawn.slick.geom.Shape;
 
 import org.lwjgl.util.Point;
+import org.lwjgl.util.vector.Vector;
+import org.lwjgl.util.vector.Vector2f;
+import org.lwjgl.util.vector.Vector3f;
 
 @SuppressWarnings("all")
 public class Tilemap {
-	private TiledMap currentZone;
+	private TiledMap mapData;
 	private Map<Point, Rectangle> collisionMap;
-	private ArrayList<ArrayList<Entity_detail_grassblade_med>> grasses = new ArrayList<ArrayList<Entity_detail_grassblade_med>>();
+	private ArrayList<ArrayList<Detail_grassblade_med>> grasses = new ArrayList<ArrayList<Detail_grassblade_med>>();
+	private ArrayList<Detail_grassblade_med> indies = new ArrayList<Detail_grassblade_med>();
 	Rectangle[] collisionArray;
 	private String path;
 	
@@ -27,7 +31,7 @@ public class Tilemap {
 	public void readFromFile(String newPath) {
 		path = newPath;
 		try {
-			currentZone = new TiledMap(path);
+			mapData = new TiledMap(path);
 		} catch (Exception e) {	e.printStackTrace(); }
 	}
 	
@@ -37,41 +41,41 @@ public class Tilemap {
 	
 	public void init() {
 		buildCollisionArray();
-		ArrayList torchPositions;
+		grasses.add(indies);
 	}
 	
 	public TiledMap getData() {
-		return currentZone;
+		return mapData;
 	}
 	
 	public int getWidth() {
-		return currentZone.getWidth();
+		return mapData.getWidth();
 	}
 	
 	public int getHeight() {
-		return currentZone.getHeight();
+		return mapData.getHeight();
 	}
 	
 	public int getWidthPixels() {
-		return currentZone.getWidth() * currentZone.getTileWidth();
+		return mapData.getWidth() * mapData.getTileWidth();
 	}
 	
 	public int getHeightPixels() {
-		return currentZone.getHeight() * currentZone.getTileHeight();
+		return mapData.getHeight() * mapData.getTileHeight();
 	}
 	
 	public void render(int x, int y) {
-		for(int i = 0; i < currentZone.getLayerCount(); i++)
-			if(!(i == currentZone.getLayerIndex("util") && !GameBase.debug_tileUtil))
-				currentZone.render(x, y, i);
+		for(int i = 0; i < mapData.getLayerCount(); i++)
+			if(!(i == mapData.getLayerIndex("util") && !GameBase.debug_tileUtil))
+				mapData.render(x, y, i);
 	}
 	
 	public int getTileAtX(float ox) {
-		return (int)Math.floor(ox / currentZone.getTileWidth());
+		return (int)Math.floor(ox / mapData.getTileWidth());
 	}
 	
 	public int getTileAtY(float oy) {
-		return (int)Math.floor(oy / currentZone.getTileHeight());
+		return (int)Math.floor(oy / mapData.getTileHeight());
 	}
 	
 	public void buildCollisionArray() {
@@ -84,17 +88,64 @@ public class Tilemap {
 				}
 			}
 		}
+	//	System.out.println(collisionMap.keySet().toString());
+	}
+	
+	public ArrayList<Shape> getNearbyObstacles(int x, int y) {
+		ArrayList<Shape> tempArray = new ArrayList<Shape>();
+	//	tempArray.add(collisionMap.get(new Point(x, y)));
+		for(int r = 2; r > -1; r--) {
+			for(int c = 1; c > -2; c--) {
+				if(true) {
+					if(blocked(x+c, y+r)) {
+						tempArray.add(new Rectangle((x+c) * 32, (y+r) * 32, 32, 32));
+					} else {
+						tempArray.add(null);
+					}
+				}
+			}
+		}
+		return tempArray;
+	}
+	
+	public ArrayList<Shape> getNearbyObstacles(Shape s) {
+		ArrayList<Shape> tempArray = new ArrayList<Shape>();
+		
+		return tempArray;
+	}
+
+	public ArrayList<Shape> getNearbyObstacles(float x, float y) {
+		return getNearbyObstacles((int)x, (int)y);
+	}
+	
+	public void getCollisionNeighbors(int x, int y) {
+		int i = y*getWidth() + x;
+		System.out.println(collisionMap.keySet().toString());
+	}
+	
+	//TODO: Broken, add support for map polygon regions
+	public boolean isWithinRegion(String name) {
+		int gid = mapData.getObjectGroupID(name);
+		for(int i = 0; i < mapData.getObjectCount(gid); i++) {
+			System.out.println(mapData.getObjectType(gid, i));
+		}
+		return false;
 	}
 	
 	public void createTallGrass(int type, Rectangle bounds, int count) {
-		ArrayList<Entity_detail_grassblade_med> group = new ArrayList<Entity_detail_grassblade_med>();
+		ArrayList<Detail_grassblade_med> group = new ArrayList<Detail_grassblade_med>();
 		grasses.add(group);
 		
 		Random gen = new Random();
 		for(int i = 0; i < count; i++) {
-			group.add(new Entity_detail_grassblade_med(type, bounds.getX() + gen.nextInt((int)bounds.getWidth()), bounds.getY() + gen.nextInt((int)bounds.getHeight())));
+			group.add(new Detail_grassblade_med(type, bounds.getX() + gen.nextInt((int)bounds.getWidth()), bounds.getY() + gen.nextInt((int)bounds.getHeight())));
 		}
 		
+		group = sortTallGrass(group);
+	}
+	
+	public ArrayList<Detail_grassblade_med> sortTallGrass(ArrayList<Detail_grassblade_med> group) {
+
 		for(int i = 0; i < group.size(); i++) {
 			float min = group.get(i).y;
 			int minIndex = i;
@@ -104,21 +155,23 @@ public class Tilemap {
 					minIndex = c;
 				}
 			}
-			Entity_detail_grassblade_med trans = group.get(i);
+			Detail_grassblade_med trans = group.get(i);
 			group.set(i, group.get(minIndex));
 			group.set(minIndex, trans);
 		}
+		
+		return group;
 	}
 	
-	public ArrayList<ArrayList<Entity_detail_grassblade_med>> getTallGrass() {
+	public ArrayList<ArrayList<Detail_grassblade_med>> getTallGrass() {
 		return grasses;
 	}
 	
-	public ArrayList<Entity_detail_grassblade_med> getTallGrassGroup(int id) {
+	public ArrayList<Detail_grassblade_med> getTallGrassGroup(int id) {
 		return grasses.get(id);
 	}
 	
-	public Entity_detail_grassblade_med getOneTallGrass(int id, int i) {
+	public Detail_grassblade_med getOneTallGrass(int id, int i) {
 		return grasses.get(id).get(i);
 	}
 	
@@ -142,12 +195,28 @@ public class Tilemap {
 		return collisionMap;
 	}
 	
-	public boolean blockedAtPixel(int x, int y) {
+	public boolean blockedAtPixel(float x, float y) {
 		return 1 == collisionType(getTileAtX(x), getTileAtY(y));
 	}
 	
 	public boolean blocked(int x, int y) {
-		return 1 == collisionType(x, y);
+		if(x >= 0 && y >= 0 && x < mapData.width && y < mapData.height)
+			return 1 == collisionType(x, y);
+		else return true;
+	}
+	
+	public boolean blockedAtTile(Vector pos) {
+		Vector2f tpos = (Vector2f)pos;
+		return blocked((int)tpos.x, (int)tpos.y);
+	}
+	
+	public boolean blockedAtTile(float x, float y) {
+		return blockedAtTile(new Vector2f(x, y));
+	}
+	
+	public boolean blocked(Vector pos) {
+		Vector2f tpos = (Vector2f)pos;
+		return blockedAtPixel(tpos.x, tpos.y);
 	}
 	
 	public boolean blocked(int i) {
@@ -155,10 +224,25 @@ public class Tilemap {
 	}
 	
 	public int collisionType(int x, int y) {
-		return Integer.parseInt(currentZone.getTileProperty(getData().getTileId(x, y, currentZone.getLayerIndex("util")), "collision", "0"));
+		return Integer.parseInt(mapData.getTileProperty(getData().getTileId(x, y, mapData.getLayerIndex("util")), "collision", "0"));
 	}
 	
 	public int collisionType(int i) {
 		return collisionType(idToTileX(i), idToTileY(i));
 	}
+
+	public void createTallGrass(int type, int x, int y) {
+		indies.add(new Detail_grassblade_med(type, x, y));
+		indies = sortTallGrass(indies);
+	}
+
+	public Vector2f getTileAt(Vector pos) {
+		Vector2f tpos = (Vector2f)pos;
+		return new Vector2f(getTileAtX(tpos.x), getTileAtY(tpos.y));
+	}
+
+	public Vector2f getTileAt(float x, float y) {
+		return getTileAt(new Vector2f(x, y));
+	}
+
 }

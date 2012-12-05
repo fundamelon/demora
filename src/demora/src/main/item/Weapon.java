@@ -1,5 +1,8 @@
 package main.item;
 
+import main.ai.Path;
+
+import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.geom.Rectangle;
 
@@ -122,6 +125,60 @@ public class Weapon extends Item {
 	public void setImg(String path) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public Path getCurrentPath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void debugDraw(Graphics g) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void drawFgEffects() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void drawBgEffects() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean hasCollisions() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isMoving() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public float getHealth() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public float getTotalHealth() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean isJumping() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

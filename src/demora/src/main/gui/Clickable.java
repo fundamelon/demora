@@ -18,6 +18,9 @@ public interface Clickable {
 	public int getID();
 	
 	public String getName();
+	
+	public String getText();
+	public void setText(String text);
 
 	public void setToggleMode(boolean mode);
 	public void setEventKey(int key);

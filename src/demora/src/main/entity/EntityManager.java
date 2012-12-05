@@ -11,12 +11,13 @@ import main.entity.*;
 public class EntityManager {
 	public static ArrayList<Entity> entityTable = new ArrayList<Entity>();
 	public static ArrayList<Entity> tile_ents = new ArrayList<Entity>();
-	
+	public static Entity_cursor cursorEntity = new Entity_cursor();
 	
 	public static void init() {
 		try {
 			addToTable(new Entity_player());
 		//	addToTable(new Entity_umbrin_test());
+		//	addToTable(cursorEntity);
 		} catch (SlickException e) {
 			e.printStackTrace();
 		}
@@ -83,6 +84,10 @@ public class EntityManager {
 	public static void update() {
 		for(int i = 0; i < entityTable.size(); i++) {
 			entityTable.get(i).update();
+			
+			if(main.GameBase.debug_entities) {
+				entityTable.get(i).debugDraw(main.GameBase.g);
+			}
 		}
 	}
 	

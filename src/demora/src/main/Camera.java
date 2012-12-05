@@ -3,67 +3,57 @@ package main;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 
+import org.lwjgl.util.vector.Vector2f;
 import org.newdawn.slick.geom.Rectangle;
+
+import util.Util;
 
 import main.entity.EntityManager;
 
 @SuppressWarnings("all")
 public class Camera {
-	public static Point pos = new Point(GameBase.getWidth()/2, GameBase.getHeight()/2);
-	public static float pos_x = pos.x, pos_y = pos.y;
-	public static Point origin = pos;
-	public static float origin_x = pos.x, origin_y = pos.y;
-	public static Point newPos = new Point(0, 0);
+	public static Vector2f pos = new Vector2f(GameBase.getWidth()/2, GameBase.getHeight()/2);
+	public static Vector2f origin = pos;
+	public static Vector2f newPos = new Vector2f(0, 0);
 	public static boolean moving = false;
 	public static int time, tick;
-	public static float mul_x, mul_y;
+	public static float velMult;
 	public static float moveDist, curDist;
-	public static boolean lockToPlayer = true;
+	public static boolean lockToPlayer = false;
+	public static boolean shaking = false;
 	
 	public static Rectangle visibleArea = new Rectangle(pos.x, pos.y, 864, 664);
 	
-	public static void setX(float nx) {pos_x = nx;}
-	public static void setY(float ny) {pos_y = ny;}
-	public static void setPoint(Point npos) {pos_x = npos.x; pos_y = npos.y;}
+	public static void setX(float nx) {pos.x = nx;}
+	public static void setY(float ny) {pos.y = ny;}
+	public static void setPoint(Point npos) {pos.x = npos.x; pos.y = npos.y;}
 	
-	public static float getX() {return pos_x;}
-	public static float getY() {return pos_y;}
-	public static float getAnchorX() {return (pos_x - GameBase.getWidth()/2);}
-	public static float getAnchorY() {return (pos_y - GameBase.getHeight()/2);}
-	public static Point getPoint() {return pos;}
-	public static String getString() {return "X: "+pos_x+" Y: "+pos_y;}
+	public static float getX() {return pos.x;}
+	public static float getY() {return pos.y;}
+	public static float getAnchorX() {return (pos.x - GameBase.getWidth()/2);}
+	public static float getAnchorY() {return (pos.y - GameBase.getHeight()/2);}
+	public static String getString() {return "X: "+pos.x+" Y: "+pos.y;}
 	
 	/**
-	 * Move the camera to certain position over specified interval
+	 * Move the camera to certain position
 	 * @param x - new pos x
 	 * @param y - new pos y
 	 * @param ntime - movement interval
 	 */
-	public static void moveToPos(float x, float y, int ntime) {
+	public static void moveToPos(float x, float y, float mult) {
 		moving = true;
 		origin = pos;
-		origin_x = origin.x;
-		origin_y = origin.y;
-		newPos = new Point((int)x, (int)y);
-		time = ntime;
-	//	mul_x = pos_x < newPos.x ? 1 : -1;
-		mul_x = (newPos.x - pos_x) / time;
-
-	//	mul_y = pos_y < newPos.y ? 1 : -1;
-		mul_y = (newPos.y - pos_y) / time;
-		
-		moveDist = (newPos.y - pos_y) / (newPos.x - pos_x);
-
-		visibleArea.setLocation(getAnchorX()-32, getAnchorY()-32);
+		newPos = new Vector2f(x, y);
+		velMult = mult;
 	}
 	
 	/**
-	 * Move the camera to certain position over specified interval
+	 * Move the camera to certain position
 	 * @param npos - new Point
 	 * @param ntime - movement interval
 	 */
-	public static void moveToPos(Point npos, int ntime) {
-		moveToPos(npos.x, npos.y, ntime);
+	public static void moveToPos(Vector2f npos, float mult) {
+		moveToPos(npos.x, npos.y, mult);
 	}
 	
 	
@@ -73,25 +63,35 @@ public class Camera {
 	public static void update() {
 		if(true) {
 			try {
-				if(!lockToPlayer) {
-					Camera.setX(Camera.getX() + mul_x);
-					Camera.setY(Camera.getY() + mul_y);
-					curDist = (newPos.y - pos_y) / (newPos.x - pos_x);
+				if(lockToPlayer) {
+					newPos.x = EntityManager.getPlayer().getX();
+					newPos.y = EntityManager.getPlayer().getY();
+					velMult = 0.01f;
 				}
-				else {
-					int x = (int)EntityManager.getPlayer().getBounds().getCenterX();
-					int y = (int)EntityManager.getPlayer().getBounds().getCenterY();
-					Camera.setX(ControlManager.clamp(x, GameBase.getWidth()/2, (GameBase.getMap().getWidth()) * 32 - GameBase.getWidth()/2));
-					Camera.setY(ControlManager.clamp(y, GameBase.getHeight()/2, (GameBase.getMap().getHeight()) * 32 - GameBase.getHeight()/2));
+				float nx = (newPos.x - pos.x) * velMult * ControlManager.getDelta();
+				float ny= (newPos.y - pos.y) * velMult * ControlManager.getDelta();
+				if(shaking) {
+					nx += 5 * (Math.random() - 0.5f);
+					ny += 5 * (Math.random() - 0.5f);
 				}
+				pos.x = Util.clamp(pos.x + nx, GameBase.getWidth()/2, (GameBase.getMap().getWidth()) * 32 - GameBase.getWidth()/2);
+				pos.y = Util.clamp(pos.y + ny, GameBase.getHeight()/2, (GameBase.getMap().getHeight()) * 32 - GameBase.getHeight()/2);
 			} catch(ArithmeticException e){}
 		}
-
+		lockToPlayer = false;
 		visibleArea.setLocation(getAnchorX()-32, getAnchorY()-32);
 	}
 	
 	public static Rectangle getVisibleArea() {
 		return visibleArea;
+	}
+	
+	public static void setShake(boolean val) {
+		shaking = val;
+	}
+	
+	public static void toggleShake() {
+		shaking = !shaking;
 	}
 	
 	public static void followPlayer() {

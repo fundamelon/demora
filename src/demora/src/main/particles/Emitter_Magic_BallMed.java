@@ -60,7 +60,7 @@ public class Emitter_Magic_BallMed implements ParticleEmitter {
 			for(int i = 0; i < 2; i++) {
 				timer = interval;
 				Particle p = system.getNewParticle(this, 1000);
-				p.setColor(1, 1, 1, 0.4f + (float)Math.abs(Math.cos(variation_timer * 0.0002 + Math.sin(variation_timer*0.001))) * 0.1f);
+				p.setColor(1, 1, 1, 0.7f + (float)Math.abs(Math.cos(variation_timer * 0.0002 + Math.sin(variation_timer*0.001))) * 0.1f);
 				p.setPosition(x + (float)(Math.random() * 8), y);
 				p.setSize(size * (float)(Math.random()*0.9f + 0.5f));
 				float ang = (float) Math.random() * 360;

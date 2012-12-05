@@ -1,7 +1,5 @@
 package main.map;
 
-import org.newdawn.slick.tiled.*;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -570,6 +568,17 @@ public class TiledMap {
 		return -1;
 	}
 	
+	//TODO: Custom method.
+	public int getObjectGroupID(String name) {
+		ObjectGroup grp;
+		for(int i = 0; i < objectGroups.size(); i++) {
+			grp = (ObjectGroup)objectGroups.get(i);
+			if(grp.name.equals(name))
+				return i;
+		}
+		return -1;
+	}
+	
 	/**
 	 * Return the name of a specific object from a specific group.
 	 * @param groupID Index of a group
@@ -599,6 +608,17 @@ public class TiledMap {
 			if (objectID >= 0 && objectID < grp.objects.size()) {
 				GroupObject object = (GroupObject) grp.objects.get(objectID);
 				return object.type;
+			}
+		}
+		return null;
+	}
+	
+	public GroupObject getObject(int groupID, int objectID) {
+		if (groupID >= 0 && groupID < objectGroups.size()) {
+			ObjectGroup grp = (ObjectGroup) objectGroups.get(groupID);
+			if (objectID >= 0 && objectID < grp.objects.size()) {
+				GroupObject object = (GroupObject) grp.objects.get(objectID);
+				return object;
 			}
 		}
 		return null;
@@ -822,8 +842,12 @@ public class TiledMap {
 			type = element.getAttribute("type");
 			x = Integer.parseInt(element.getAttribute("x"));
 			y = Integer.parseInt(element.getAttribute("y"));
-			width = Integer.parseInt(element.getAttribute("width"));
-			height = Integer.parseInt(element.getAttribute("height"));
+			
+			if(element.hasAttribute("width"))
+				width = Integer.parseInt(element.getAttribute("width"));
+
+			if(element.hasAttribute("height"))
+				height = Integer.parseInt(element.getAttribute("height"));
 
 			Element imageElement = (Element) element.getElementsByTagName(
 					"image").item(0);

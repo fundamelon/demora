@@ -7,9 +7,10 @@ import java.util.*;
 
 import javax.imageio.ImageIO;
 
+import main.ai.*;
 import main.entity.*;
+import main.map.*;
 import main.particles.*;
-import main.pathfinding.*;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -17,6 +18,7 @@ import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.*;
+import org.lwjgl.util.vector.*;
 
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
@@ -24,8 +26,11 @@ import org.newdawn.slick.Color;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.geom.Circle;
 import org.newdawn.slick.geom.Rectangle;
+import org.newdawn.slick.geom.Shape;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.particles.*;
+
+import util.Util;
 
 public class GraphicsManager {
 	
@@ -35,19 +40,18 @@ public class GraphicsManager {
 	public static org.newdawn.slick.particles.ParticleSystem particle_system_smoke;
 	public static org.newdawn.slick.particles.ParticleSystem particle_system_magic;
 	private static int sparkct = 0, particle_count = 0;
-	private static int fps_lag;
 	public static boolean first_run = true;
 	
 	private static Color fadeCol = new Color(0, 0, 0);
 	private static Color overlayCol = new Color(fadeCol.getRed(), fadeCol.getGreen(), fadeCol.getBlue(), 0);
 	//Vars with preceding underscore are to be values for render options.  :O
-	private static boolean fadeMode = true, helperText = false, shake = false;
+	private static boolean fadeMode = false, helperText = false, shake = false;
 	
 	static Pathfinder_AStar pathfinderTest = new Pathfinder_AStar(AIManager.getNodeMap());
 	
 	private static boolean debug = false;
 	
-	private static Emitter_Spark_FireMed sparktest = new Emitter_Spark_FireMed();
+	private static SparkEmitter sparktest = new SparkEmitter();
 	
 	public static Image grassblade_tex0, grassblade_tex1;
 	/**
@@ -57,7 +61,7 @@ public class GraphicsManager {
 		try {
 			particle_system_fire = new ParticleSystem(new Image("lib/img/particle/flamelrg_02.tga"));
 			particle_system_smoke = new ParticleSystem(new Image("lib/img/particle/smoke_02.tga"));
-			particle_system_magic = new ParticleSystem(new Image("lib/img/particle/flamelrg_02.tga"));
+			particle_system_magic = new ParticleSystem(new Image("lib/img/particle/smoke_02.tga"));
 		} catch (SlickException e) {
 			e.printStackTrace();
 		}
@@ -68,16 +72,24 @@ public class GraphicsManager {
 		
 		
 		try {
-			grassblade_tex0 = new Image("lib/img/tilesets/individual/grass_blade0a.png");
+			grassblade_tex0 = new Image("lib/img/tilesets/individual/grass_blade0a_tint1.png");
 			grassblade_tex1 = new Image("lib/img/tilesets/individual/grass_blade1.png");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 
-		GameBase.getMap().createTallGrass(0, new Rectangle(0, 0, 3000, 2000), 15000);
-	//	GameBase.getZone().createTallGrass(0, new Rectangle(0, 0, 3000, 2000), 15000);
+	//	Debug grass
+	//	GameBase.getMap().createTallGrass(0, new Rectangle(0, 0, 3000, 2000), 15000);
+	//	GameBase.getMap().createTallGrass(0, new Rectangle(0, 0, 3000, 2000), 15000);
 		
-		sparktest.init(null, 1000, 0.09f, -90, 10);
+		TiledMap map = GameBase.getMap().getData();
+		int groupID = map.getObjectGroupID("grass");
+		for(int i = 0; i < map.getObjectCount(groupID); i++) {
+			GameBase.getMap().createTallGrass(0, map.getObjectX(groupID, i), map.getObjectY(groupID, i));
+		}
+		
+		sparktest.init(5f, 90, 45, 10, "Fire");
+		Detail_fog_overlay.init();
 	}
 	
 	/**
@@ -93,41 +105,39 @@ public class GraphicsManager {
 		int width = GameBase.getWidth();
 		int height = GameBase.getHeight();
 
-		Camera.followPlayer();
+	//	Camera.followPlayer();
+		Camera.update();
+		if(ControlManager.keyStatus(Keyboard.KEY_5)) {
+			Camera.moveToPos(
+					Util.toWorldX(ControlManager.getMouseX()), 
+					Util.toWorldY(ControlManager.getMouseY()), 0.01f);
+		} else {
+			Camera.followPlayer();
+		}
 		
 		if(GameBase.mapRendering)
 			renderMap(g);
 
-		sparktest.update();
-		sparktest.render(g);
 		
 		
 		//Set the camera to follow the player with the players coordinates, then update the camera.
 		
-		Camera.update();
-		Camera.moveToPos(EntityManager.getPlayer().getX(), EntityManager.getPlayer().getY(), 1); 
 		
 		g.translate(-Camera.getAnchorX(), -Camera.getAnchorY());
 
 		if(debug) {
-			for(Rectangle r : GameBase.getMap().getCollisionArray()) {
+			for(Shape r : GameBase.getMap().getNearbyObstacles(
+					EntityManager.getPlayer().tilepos.x, EntityManager.getPlayer().tilepos.y)) {
 				if(r != null) {
 					g.draw(r);
 				}
 			}
 			
-			AIManager.renderNodeMap(g);
-			if(ControlManager.keyStatus(Keyboard.KEY_P)) {
-				int tileX = GameBase.getMap().getTileAtX(EntityManager.getPlayer().getBounds().getCenterX());
-				int tileY = GameBase.getMap().getTileAtY(EntityManager.getPlayer().getBounds().getCenterY());
-				pathfinderTest.pathfind(
-						AIManager.getNodeMap().getNodeAt(tileX, tileY), 
-						AIManager.getNodeMap().getNodeAt(
-								GameBase.getMap().getTileAtX(toWorldX(ControlManager.getMouseX())), 
-								GameBase.getMap().getTileAtY(toWorldY(ControlManager.getMouseY()))));
-			}
-				pathfinderTest.createPath().render(g);
-				
+		//	AIManager.renderNodeMap(g);		
+			for(Entity e : EntityManager.entityTable)
+				if(e.getCurrentPath() != null) {
+					e.getCurrentPath().render(g);		
+				}
 		}
 		
 		
@@ -145,36 +155,37 @@ public class GraphicsManager {
 			}
 			
 			if(ControlManager.mouseButtonStatus(ControlManager.mouseSecondary)) {
-				int tileX = GameBase.getMap().getTileAtX(toWorldX(ControlManager.getMouseX()));
-				int tileY = GameBase.getMap().getTileAtY(toWorldY(ControlManager.getMouseY()));
+				int tileX = GameBase.getMap().getTileAtX(Util.toWorldX(ControlManager.getMouseX()));
+				int tileY = GameBase.getMap().getTileAtY(Util.toWorldY(ControlManager.getMouseY()));
 				Color oldColor = g.getColor();
 				g.setColor(Color.black);
-				g.drawRect(toLocalX(tileX * 32), toLocalY(tileY * 32), 32, 32);
+				g.drawRect(Util.toScreenX(tileX * 32), Util.toScreenY(tileY * 32), 32, 32);
 				g.setColor(oldColor);
 			//	System.out.println("ID: "+(GameBase.getZone().getData().getTileId(tileX, tileY, 2)));
 			}
 			
-			g.drawRect(toWorldX(ControlManager.getMouseX() - 8),  toWorldY(ControlManager.getMouseY() - 8), 16, 16);
+		//	g.drawRect(Util.toWorldX(ControlManager.getMouseX() - 8),  Util.toWorldY(ControlManager.getMouseY() - 8), 16, 16);
 
 			if(ControlManager.mouseButtonClicked(ControlManager.mousePrimary)) {
+				/*
 				for(int i = 0; i < 5; i++) {
 					particle_system_smoke.addEmitter(new Emitter_Smoke_ContinuousMed());
-					((main.particles.ParticleEmitter)particle_system_smoke.getEmitter(particle_system_smoke.getEmitterCount()-1)).setPos(toWorldX(ControlManager.getMouseX()), toWorldY(ControlManager.getMouseY()));
+					((main.particles.ParticleEmitter)particle_system_smoke.getEmitter(particle_system_smoke.getEmitterCount()-1)).setPos(Util.toWorldX(ControlManager.getMouseX()), Util.toWorldY(ControlManager.getMouseY()));
 				}
 				for(int i = 0; i < 5; i++) {
 					particle_system_fire.addEmitter(new Emitter_FireMed());
-					((main.particles.ParticleEmitter)particle_system_fire.getEmitter(particle_system_fire.getEmitterCount()-1)).setPos(toWorldX(ControlManager.getMouseX()), toWorldY(ControlManager.getMouseY()));
+					((main.particles.ParticleEmitter)particle_system_fire.getEmitter(particle_system_fire.getEmitterCount()-1)).setPos(Util.toWorldX(ControlManager.getMouseX()), Util.toWorldY(ControlManager.getMouseY()));
 				}
-				
+				*/
 
-				sparktest.createSparksAt(1, toWorldX(ControlManager.getMouseX()), toWorldY(ControlManager.getMouseY()));
+				sparktest.createSparksAt(new Vector2f(Util.toWorldX(ControlManager.getMouseX()), Util.toWorldY(ControlManager.getMouseY())), 100);
 			}
 			
 			if(ControlManager.mouseButtonClicked(ControlManager.mouseSecondary)) {
 				System.out.println("clicky");
 				for(int i = 0; i < 5; i++) {
-					particle_system_magic.addEmitter(new Emitter_Magic_BallMed());
-					((main.particles.ParticleEmitter)particle_system_magic.getEmitter(particle_system_magic.getEmitterCount()-1)).setPos(toWorldX(ControlManager.getMouseX()), toWorldY(ControlManager.getMouseY()));
+					particle_system_magic.addEmitter(new Emitter_Magic_BurstSmall());
+					((main.particles.ParticleEmitter)particle_system_magic.getEmitter(particle_system_magic.getEmitterCount()-1)).setPos(Util.toWorldX(ControlManager.getMouseX()), Util.toWorldY(ControlManager.getMouseY()));
 				}
 			}
 		}
@@ -183,31 +194,56 @@ public class GraphicsManager {
 	//		((main.particles.ParticleEmitter)particle_system_magic.getEmitter(i)).setPos(ControlManager.getMouseX(), ControlManager.getMouseY());
 	//	}
 		
-		for(ArrayList<Entity_detail_grassblade_med> grass_group : GameBase.getMap().getTallGrass()) {
-			for(Entity_detail_grassblade_med grass_blade : grass_group)
-				if(grass_blade.y <= EntityManager.getPlayer().getY()) 
-					grass_blade.draw();
+		if(GameBase.mapRendering) {
+			for(ArrayList<Detail_grassblade_med> grass_group : GameBase.getMap().getTallGrass()) {
+				for(Detail_grassblade_med grass_blade : grass_group)
+					if(grass_blade.y <= EntityManager.getPlayer().getY()) 
+						grass_blade.draw();
+			}
 		}
 
 		renderEntities(g);
 
-		for(ArrayList<Entity_detail_grassblade_med> grass_group : GameBase.getMap().getTallGrass()) {
-			for(Entity_detail_grassblade_med grass_blade : grass_group)
-				if(grass_blade.y >= EntityManager.getPlayer().getY()) 
-					grass_blade.draw();
+		if(GameBase.mapRendering) { 
+			for(ArrayList<Detail_grassblade_med> grass_group : GameBase.getMap().getTallGrass()) {
+				for(Detail_grassblade_med grass_blade : grass_group)
+					if(grass_blade.y >= EntityManager.getPlayer().getY()) 
+						grass_blade.draw();
+			}
 		}
+
 		
+		sparktest.update();
 		particle_system_smoke.update((int)delta);
 		particle_system_fire.update((int)delta);
 		particle_system_magic.update((int)delta);
-		
+
+		sparktest.render();
 		particle_system_smoke.render();
 		particle_system_fire.render();
 		particle_system_magic.render();
 		
+		
 
 		g.translate(Camera.getAnchorX(), Camera.getAnchorY());
+
+		Detail_fog_overlay.update();
+		Detail_fog_overlay.render();
+
+		//Stamina bar
+		g.setColor(Color.white);
+		g.drawRect(18, 498, 204, 14);
+		g.drawRect(20, 500, 200 * EntityManager.getPlayer().getStaminaFraction(), 10);
+		g.setColor(new Color(0f, 0.5f, 0f, 0.5f));
+		g.fillRect(21, 501, 198 * EntityManager.getPlayer().getStaminaFraction(), 8);
 		
+		//Health bar
+		float healthFraction = EntityManager.getPlayer().getHealth()/EntityManager.getPlayer().getTotalHealth();
+		g.setColor(Color.white);
+		g.drawRect(18, 528, 204, 14);
+		g.drawRect(20, 530, 200 * healthFraction, 10);
+		g.setColor(new Color(0.5f, 0f, 0f, 0.5f));
+		g.fillRect(21, 531, 198 * healthFraction, 8);
 		
 		g.setColor(oldCol);
 		
@@ -229,7 +265,7 @@ public class GraphicsManager {
 				}
 			try {
 				String date = GameBase.getDateTime().replace("/", "-").replace(":", "-").replace(" ", "_");
-				ImageIO.write(image, "PNG", new File("lib/img/cap_"+date+".png"));
+				ImageIO.write(image, "PNG", new File("lib/img/screenshots/"+date+".png"));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -247,6 +283,8 @@ public class GraphicsManager {
 	public static void renderEntities(Graphics g) {
 		for(int i = 0; i < EntityManager.getTableLength(); i++) {
 			Entity curEnt = EntityManager.getByIndex(i);
+			if(curEnt.getImg() == null) continue;
+			
 			if(curEnt instanceof Entity_player) {
 				curEnt = (Entity_player)curEnt;
 			} else if(curEnt instanceof Entity_mobile) {
@@ -265,9 +303,11 @@ public class GraphicsManager {
 			float x = curEnt.getX() - curEnt.getImg().getWidth()/2, y = curEnt.getY() - curEnt.getImg().getHeight()/2;
 			
 			g.setColor(new Color(0, 0, 0, 0.4f));
-			g.fillOval(curEnt.getBounds().getCenterX() -15 , curEnt.getBounds().getCenterY() + curEnt.getImgOffsetY() + 8, 30, 8);
+			g.fillOval(curEnt.getBounds().getCenterX() -15 , curEnt.getBounds().getCenterY() + curEnt.getImgOffsetY() + z + 10, 30, 8);
 			
-			g.drawImage(curEnt.getImg(), x + curEnt.getImgOffsetX(), y + curEnt.getImgOffsetY() + z);
+			curEnt.drawFgEffects();
+			g.drawImage(curEnt.getImg(), (int)x + curEnt.getImgOffsetX(), (int)y + curEnt.getImgOffsetY());
+			curEnt.drawBgEffects();
 			
 		}
 	}
@@ -288,7 +328,7 @@ public class GraphicsManager {
 	 */
 	public static void print(Graphics g, String text, float x, float y, boolean local) {
 		if(local) 
-			g.drawString(text, (int)toLocalX(x), (int)toLocalY(y));
+			g.drawString(text, (int)Util.toScreenX(x), (int)Util.toScreenY(y));
 		else
 			g.drawString(text, (int)x, (int)y);
 	}
@@ -333,22 +373,29 @@ public class GraphicsManager {
 	}
 	
 	/**
-	 * Update overlay alpha based on time and boolean fade variable.
+	 * Update overlay alpha to obscure screen
 	 */
 	public static void fade() {
+		float fadeIncrement = ControlManager.getDelta() * 0.1f;
 		if(fadeMode) {
-			if(overlayCol.getAlpha() - fps_lag/10 > 0)
-				overlayCol = new Color(overlayCol.getRed(), overlayCol.getGreen(), overlayCol.getBlue(), overlayCol.getAlpha() - fps_lag / 10);
+			if(overlayCol.getAlpha() > 0 - fadeIncrement)
+				overlayCol = new Color(overlayCol.getRed(), overlayCol.getGreen(), overlayCol.getBlue(), overlayCol.getAlpha() - fadeIncrement);
 			else
 				overlayCol = new Color(overlayCol.getRed(), overlayCol.getGreen(), overlayCol.getBlue(), 0);
 				
 		}
 		else {
-			if(overlayCol.getAlpha() + fps_lag/10 < 255)
-				overlayCol = new Color(overlayCol.getRed(), overlayCol.getGreen(), overlayCol.getBlue(), overlayCol.getAlpha() + fps_lag / 10);
+			if(overlayCol.getAlpha() < 255 + fadeIncrement)
+				overlayCol = new Color(overlayCol.getRed(), overlayCol.getGreen(), overlayCol.getBlue(), overlayCol.getAlpha() + fadeIncrement);
 			else
 				overlayCol = new Color(overlayCol.getRed(), overlayCol.getGreen(), overlayCol.getBlue(), 255);
 		}
+	}
+	
+	public static void fadeToggle() {
+		fadeMode = !fadeMode;
+		fade();
+		System.out.println("Fade: "+fadeMode);
 	}
 	
 	/**
@@ -367,34 +414,11 @@ public class GraphicsManager {
 	public static void shake() {
 		shake = true;
 	}
-	                                                                                  
-	
-	
-	//Important functions: they add the camera's x and y to the given GLOBAL coordinates
-	//resulting in LOCAL coordinates relative to the screen itself.
-	
-	/**
-	 * Translate a global x value to a local x value
-	 * @param ox - original x value
-	 * @return localized x value
-	 */
-	public static float toLocalX(float ox) {
-		return ox - Camera.getAnchorX();
-	}
-	/**
-	 * Translate a global y value to a local y value
-	 * @param oy - original y value
-	 * @return localized y value
-	 */
-	public static float toLocalY(float oy) {
-		return oy - Camera.getAnchorY();
-	}
-	
-	public static float toWorldX(float ox) {
-		return ox + Camera.getAnchorX();
-	}
-	
-	public static float toWorldY(float oy) {
-		return oy + Camera.getAnchorY();
+
+	public static void renderMenuOverlay(Graphics g) {
+		Color oldCol = g.getColor();
+		g.setColor(new Color(0.2f, 0.2f, 0.2f, 0.4f));
+		g.fillRect(0, 0, GameBase.getWidth(), GameBase.getHeight());
+		g.setColor(oldCol);
 	}
 }

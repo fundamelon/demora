@@ -24,7 +24,18 @@ public class GUIManager {
 	}
 
 	public static void render(Graphics g, float delta) {
+		Color oldCol = g.getColor();
 		for(Panel p : panels) {
+			if(p.getPreset() == Panel.PRESET_MAIN) {
+				if(GameBase.isInGame()) {
+					g.setColor(Color.black);
+					p.getItem(0).setText("RESUME");
+				}
+				else {
+					g.setColor(Color.white);
+				}
+				g.drawString("Demora v."+GameBase.getVersion(), 256, 50);
+			}
 			for(int i = 0; i < p.getItems().size(); i++) {
 				Clickable item = p.getItem(i);
 				if(item.isVisible()) {
@@ -45,13 +56,20 @@ public class GUIManager {
 					Color oldColor = g.getColor();
 					if(item.mouseDown()) {
 						g.setColor(Color.darkGray);
-						Event.fire(Event.GAME_START);
+						Event.fire(item.getEventKey());
 					} else if(item.mouseHover()) {
 						g.setColor(Color.gray);
 					} else {
 						g.setColor(Color.white);
 					}
+					
 					g.fill(item.getBounds());
+					
+					g.setColor(Color.black);
+					g.drawString(item.getText(), 
+							item.getBounds().getCenterX() - item.getText().length() * 3.3f, 
+							item.getBounds().getCenterY() - 5);
+					
 					g.setColor(oldColor);
 				}
 			}

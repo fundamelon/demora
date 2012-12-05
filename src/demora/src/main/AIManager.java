@@ -2,7 +2,7 @@ package main;
 
 import org.newdawn.slick.Graphics;
 
-import main.pathfinding.*;
+import main.ai.*;
 
 @SuppressWarnings("all")
 public class AIManager {

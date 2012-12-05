@@ -16,16 +16,17 @@ public class Entity_umbrin_test extends Entity_mobile implements Entity {
 		TEX_RIGHT = new Image("lib/img/char/umbrin_0/umbrin_right_static.png");
 		
 		cur_img = TEX_FRONT;
+		
+		bounds = new Rectangle(0, 0, 32, 32);
 	}
 	
 	public void init(int nx, int ny, boolean tilewise) {
-		x = nx;
-		y = ny;
+		pos.x = nx;
+		pos.y = ny;
 		updateBounds();
 		
-		moveSpeed = 0.5f;
+		velMult = 0.5f;
 		
-		bounds = new Rectangle(0, 0, 32, 32);
 		
 		System.out.println("ENT: umbrin test initialized");
 	}
@@ -35,33 +36,33 @@ public class Entity_umbrin_test extends Entity_mobile implements Entity {
 	}
 	
 	public void update() {
-		super.z = (float)Math.sin((System.currentTimeMillis()) *0.002)*8 - 25;
+		super.pos.z = (float)Math.sin((System.currentTimeMillis()) *0.002)*8 - 25;
 		
-		dx = (EntityManager.getPlayer().getX() - x) * 0.01f;
-		dy = (EntityManager.getPlayer().getY() - y) * 0.01f;
+		vel.x = (EntityManager.getPlayer().getX() - pos.x) * 0.01f;
+		vel.y = (EntityManager.getPlayer().getY() - pos.y) * 0.01f;
 		
-		x += dx;
-		y += dy;
+		super.update();
 		
-		if(dx > 0 && dx > Math.abs(dy)) {
+		if(vel.x > 0 && vel.x > Math.abs(vel.y)) {
 			cur_img = TEX_RIGHT.copy();
 		}
-		else if(dx < 0 && -dx > Math.abs(dy)) {
+		else if(vel.x < 0 && -vel.x > Math.abs(vel.y)) {
 			cur_img = TEX_LEFT.copy();
 		}
-		else if(dy < 0 && -dy > Math.abs(dx)) {
+		else if(vel.y < 0 && -vel.y > Math.abs(vel.x)) {
 			cur_img = TEX_BACK.copy();
 		} else {
 			cur_img = TEX_FRONT.copy();
 		}
-
-		updateBounds();
-		move(x, y);
+		super.finalize();
+		super.updateBounds();
+		
+	//	move(pos.x, pos.y);
 	}
 	
 	public void updateBounds() {
-		bounds.setX(x - getBounds().getWidth()/2);
-		bounds.setY(y + getBounds().getHeight()/2);
+		bounds.setX(pos.x - getBounds().getWidth()/2);
+		bounds.setY(pos.y + getBounds().getHeight()/2);
 	}
 	
 	@Override
@@ -84,11 +85,11 @@ public class Entity_umbrin_test extends Entity_mobile implements Entity {
 	}
 	
 	public float getX() {
-		return x;
+		return pos.x;
 	}
 
 	public float getY() {
-		return y;
+		return pos.y;
 	}
 
 	@Override

@@ -9,6 +9,7 @@ public class Button implements Clickable{
 
 	private Rectangle bounds;
 	private int eventKey;
+	private String text = "";
 	private boolean status;
 	private boolean prevStatus;
 	private boolean mouseEntered;
@@ -40,6 +41,12 @@ public class Button implements Clickable{
 		this(newId, new Rectangle(0, 0, 100, 100));
 	}
 	
+	public Button(int newId, String text, float x, float y, float width, float height, int eventKey) {
+		this(newId, x, y, width, height);
+		this.eventKey = eventKey;
+		this.text = text;
+	}
+
 	public void update() {
 		if(mouseHover() != mouseOver) {
 			if(mouseHover()) {
@@ -112,6 +119,14 @@ public class Button implements Clickable{
 
 	public void setToggleMode(boolean mode) {
 		toggleable = mode;		
+	}
+	
+	public String getText() {
+		return text;
+	}
+	
+	public void setText(String text) {
+		this.text = text;
 	}
 
 	public String getName() {
